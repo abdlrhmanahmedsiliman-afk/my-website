@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kashf - Logic Tests</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #f5f5f5; direction: rtl; }
+    .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { color: #0C7B66; margin-bottom: 20px; }
+    .test { padding: 12px; margin: 8px 0; border-radius: 4px; font-family: monospace; font-size: 14px; }
+    .test.pass { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .test.fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .summary { margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 4px; font-weight: bold; }
+    .error { color: #721c24; font-size: 12px; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Kashf Logic Tests</h1>
+    <div id="results"></div>
+    <div class="summary" id="summary"></div>
+  </div>
+
+  <script>
+    // Copy logic functions here for browser testing
+    function money(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return 0;
+      return Math.round((n + Number.EPSILON) * 100) / 100;
+    }
+
+    function lineTotal(qty, price) {
+      return money((Number(qty) || 0) * (Number(price) || 0));
+    }
+
+    function subtotal(lines) {
+      return money(lines.reduce((sum, line) => sum + lineTotal(line.qty, line.price), 0));
+    }
+
+    function discountAmount(subtotal, discountType, discountValue) {
+      if (!discountValue || discountType === 'none') return 0;
+      if (discountType === 'percent') {
+        return money(subtotal * (discountValue / 100));
+      }
+      if (discountType === 'amount') {
+        return money(Math.min(discountValue, subtotal));
+      }
+      return 0;
+    }
+
+    function taxExclusive(subtotalAfterDiscount, taxRate) {
+      return money(subtotalAfterDiscount * (taxRate / 100));
+    }
+
+    function taxInclusive(total, taxRate) {
+      const divisor = 1 + (taxRate / 100);
+      const net = money(total / divisor);
+      return money(total - net);
+    }
+
+    function calculateTotals(lines, discountType, discountValue, taxRate, pricesIncludeTax) {
+      const sub = subtotal(lines);
+      const disc = discountAmount(sub, discountType, discountValue);
+      const afterDiscount = money(sub - disc);
+      let tax = 0;
+      let total = 0;
+
+      if (pricesIncludeTax) {
+        total = afterDiscount;
+        tax = taxInclusive(total, taxRate);
+      } else {
+        tax = taxExclusive(afterDiscount, taxRate);
+        total = money(afterDiscount + tax);
+      }
+
+      return {
+        subtotal: sub,
+        discount: disc,
+        tax: tax,
+        total: total,
+        afterDiscount: afterDiscount
+      };
+    }
+
+    function calculateBalance(total, payments) {
+      const paid = (payments || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+      return money((Number(total) || 0) - paid);
+    }
+
+    function deriveStatus(invoice) {
+      if (!invoice || invoice.total <= 0) return 'draft';
+      const balance = calculateBalance(invoice.total, invoice.payments || []);
+      if (balance <= 0.005) return 'paid';
+      if (balance < invoice.total) return 'partial';
+      if (invoice.dueDate && new Date(invoice.dueDate) < new Date().setHours(0,0,0,0)) return 'overdue';
+      return invoice.sent ? 'sent' : 'draft';
+    }
+
+    function generateNumber(prefix, year, counter) {
+      return `${prefix}-${year}-${String(counter).padStart(4, '0')}`;
+    }
+
+    function getNextCounter(counters, type, year) {
+      const key = `${type}-${year}`;
+      return (counters[key] || 0) + 1;
+    }
+
+    function monthlyAggregation(invoices, expenses, months = 6) {
+      const now = new Date();
+      const result = [];
+      
+      for (let i = months - 1; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+        
+        const monthInvoices = invoices.filter(inv => {
+          const invDate = new Date(inv.date);
+          return invDate.getFullYear() === year && invDate.getMonth() === month && deriveStatus(inv) !== 'draft';
+        });
+        
+        const monthExpenses = expenses.filter(exp => {
+          const expDate = new Date(exp.date);
+          return expDate.getFullYear() === year && expDate.getMonth() === month;
+        });
+        
+        const revenue = money(monthInvoices
+          .filter(inv => deriveStatus(inv) === 'paid')
+          .reduce((sum, inv) => sum + inv.total, 0));
+        
+        const expensesSum = money(monthExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0));
+        
+        result.push({
+          month: monthKey,
+          monthLabel: date.toLocaleDateString('ar-EG', { month: 'short', year: 'numeric' }),
+          revenue,
+          expenses: expensesSum,
+          net: money(revenue - expensesSum),
+          invoiceCount: monthInvoices.length
+        });
+      }
+      
+      return result;
+    }
+
+    function agingBuckets(invoices) {
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const buckets = {
+        '0-30': { label: '0-30', days: [0, 30], amount: 0, invoices: [] },
+        '31-60': { label: '31-60', days: [31, 60], amount: 0, invoices: [] },
+        '61-90': { label: '61-90', days: [61, 90], amount: 0, invoices: [] },
+        '90+': { label: '90+', days: [91, Infinity], amount: 0, invoices: [] }
+      };
+      
+      invoices.forEach(inv => {
+        const status = deriveStatus(inv);
+        if (status === 'paid' || status === 'draft') return;
+        
+        const balance = calculateBalance(inv.total, inv.payments || []);
+        if (balance <= 0.005) return;
+        
+        const dueDate = new Date(inv.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
+        
+        let bucketKey = '0-30';
+        if (diffDays >= 31 && diffDays <= 60) bucketKey = '31-60';
+        else if (diffDays >= 61 && diffDays <= 90) bucketKey = '61-90';
+        else if (diffDays >= 91) bucketKey = '90+';
+        
+        buckets[bucketKey].amount = money(buckets[bucketKey].amount + balance);
+        buckets[bucketKey].invoices.push({ ...inv, balance, daysOverdue: diffDays });
+      });
+      
+      return buckets;
+    }
+
+    function checkFreeLimit(invoices, quotes, type) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      
+      if (type === 'invoice') {
+        const count = invoices.filter(inv => {
+          const invDate = new Date(inv.createdAt || inv.date);
+          return invDate.getFullYear() === year && invDate.getMonth() === month && deriveStatus(inv) !== 'draft';
+        }).length;
+        return { allowed: count < 3, count, limit: 3 };
+      }
+      
+      if (type === 'quote') {
+        const count = quotes.filter(q => {
+          const qDate = new Date(q.createdAt || q.date);
+          return qDate.getFullYear() === year && qDate.getMonth() === month;
+        }).length;
+        return { allowed: count < 3, count, limit: 3 };
+      }
+      
+      return { allowed: true, count: 0, limit: 3 };
+    }
+
+    function validateLicenseKey(key) {
+      if (!key || typeof key !== 'string') return false;
+      const pattern = /^KASHF-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
+      if (!pattern.test(key)) return false;
+      
+      const parts = key.split('-');
+      const checksumChar = parts[3][3];
+      const data = parts.slice(1, 3).join('') + parts[3].slice(0, 3);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        sum += data.charCodeAt(i);
+      }
+      const expected = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'[sum % 36];
+      return checksumChar === expected;
+    }
+
+    function formatNumber(num, locale = 'ar-EG') {
+      return Number(num).toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function generateId() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function todayISO() {
+      const d = new Date();
+      return d.toISOString().split('T')[0];
+    }
+
+    function addDaysISO(days) {
+      const d = new Date();
+      d.setDate(d.getDate() + days);
+      return d.toISOString().split('T')[0];
+    }
+
+    function isOverdue(dateStr) {
+      if (!dateStr) return false;
+      const due = new Date(dateStr);
+      due.setHours(0, 0, 0, 0);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      return due < now;
+    }
+
+    function invoicesToCSV(invoices, clients) {
+      const clientMap = new Map(clients.map(c => [c.id, c]));
+      const headers = ['Number', 'Date', 'Due Date', 'Client', 'Client Email', 'Currency', 'Subtotal', 'Discount', 'Tax', 'Total', 'Paid', 'Balance', 'Status'];
+      const rows = invoices.map(inv => {
+        const client = clientMap.get(inv.clientId) || {};
+        const totals = calculateTotals(
+          inv.items || [],
+          inv.discountType || 'none',
+          inv.discountValue || 0,
+          inv.taxRate || 0,
+          inv.pricesIncludeTax || false
+        );
+        const balance = calculateBalance(totals.total, inv.payments || []);
+        const status = deriveStatus(inv);
+        return [
+          inv.number,
+          inv.date,
+          inv.dueDate,
+          client.name || '',
+          client.email || '',
+          inv.currency || 'EGP',
+          totals.subtotal,
+          totals.discount,
+          totals.tax,
+          totals.total,
+          totals.total - balance,
+          balance,
+          status
+        ];
+      });
+      return [headers.join(','), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
+    }
+
+    function calculatePL(invoices, expenses, periodStart, periodEnd) {
+      const start = periodStart ? new Date(periodStart) : null;
+      const end = periodEnd ? new Date(periodEnd) : null;
+      if (end) end.setHours(23, 59, 59, 999);
+      
+      const filteredInvoices = invoices.filter(inv => {
+        const date = new Date(inv.date);
+        if (start && date < start) return false;
+        if (end && date > end) return false;
+        return deriveStatus(inv) === 'paid';
+      });
+      
+      const filteredExpenses = expenses.filter(exp => {
+        const date = new Date(exp.date);
+        if (start && date < start) return false;
+        if (end && date > end) return false;
+        return true;
+      });
+      
+      const revenue = money(filteredInvoices.reduce((sum, inv) => sum + inv.total, 0));
+      const expensesSum = money(filteredExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0));
+      const netProfit = money(revenue - expensesSum);
+      const taxDue = money(revenue * 0.14);
+      
+      return {
+        revenue,
+        expenses: expensesSum,
+        netProfit,
+        taxDue,
+        invoiceCount: filteredInvoices.length,
+        profitMargin: revenue > 0 ? money((netProfit / revenue) * 100) : 0
+      };
+    }
+
+    // Test runner
+    const tests = [
+      {
+        name: 'money() rounds to 2 decimals',
+        fn: () => {
+          assert(money(10.123) === 10.12, '10.123 should be 10.12');
+          assert(money(10.125) === 10.13, '10.125 should be 10.13');
+          assert(money(10.1) === 10.1, '10.1 should be 10.1');
+          assert(money(10) === 10, '10 should be 10');
+          assert(money(0.005) === 0.01, '0.005 should be 0.01');
+        }
+      },
+      {
+        name: 'lineTotal() calculates qty * price',
+        fn: () => {
+          assert(lineTotal(2, 100) === 200, '2 * 100 = 200');
+          assert(lineTotal(1.5, 10) === 15, '1.5 * 10 = 15');
+          assert(lineTotal(3, 33.33) === 99.99, '3 * 33.33 = 99.99');
+        }
+      },
+      {
+        name: 'subtotal() sums line totals',
+        fn: () => {
+          const lines = [
+            { qty: 2, price: 100 },
+            { qty: 1, price: 50 },
+            { qty: 3, price: 25 }
+          ];
+          assert(subtotal(lines) === 325, 'subtotal should be 325');
+        }
+      },
+      {
+        name: 'discountAmount() calculates percent discount',
+        fn: () => {
+          assert(discountAmount(1000, 'percent', 10) === 100, '10% of 1000 = 100');
+          assert(discountAmount(1000, 'percent', 0) === 0, '0% = 0');
+          assert(discountAmount(1000, 'none', 10) === 0, 'none type = 0');
+        }
+      },
+      {
+        name: 'discountAmount() calculates fixed amount discount',
+        fn: () => {
+          assert(discountAmount(1000, 'amount', 150) === 150, 'fixed 150 = 150');
+          assert(discountAmount(1000, 'amount', 2000) === 1000, 'capped at subtotal');
+        }
+      },
+      {
+        name: 'taxExclusive() calculates tax on net amount',
+        fn: () => {
+          assert(taxExclusive(1000, 14) === 140, '14% of 1000 = 140');
+          assert(taxExclusive(100, 5) === 5, '5% of 100 = 5');
+        }
+      },
+      {
+        name: 'taxInclusive() extracts tax from total',
+        fn: () => {
+          assert(taxInclusive(114, 14) === 14, '114 with 14% tax -> 14 tax');
+          assert(taxInclusive(105, 5) === 5, '105 with 5% tax -> 5 tax');
+        }
+      },
+      {
+        name: 'calculateTotals() with exclusive tax',
+        fn: () => {
+          const lines = [{ qty: 2, price: 100 }, { qty: 1, price: 50 }];
+          const result = calculateTotals(lines, 'none', 0, 14, false);
+          assert(result.subtotal === 250, 'subtotal 250');
+          assert(result.discount === 0, 'discount 0');
+          assert(result.tax === 35, 'tax 35');
+          assert(result.total === 285, 'total 285');
+        }
+      },
+      {
+        name: 'calculateTotals() with percent discount',
+        fn: () => {
+          const lines = [{ qty: 1, price: 1000 }];
+          const result = calculateTotals(lines, 'percent', 10, 14, false);
+          assert(result.subtotal === 1000, 'subtotal 1000');
+          assert(result.discount === 100, 'discount 100');
+          assert(result.afterDiscount === 900, 'afterDiscount 900');
+          assert(result.tax === 126, 'tax 126');
+          assert(result.total === 1026, 'total 1026');
+        }
+      },
+      {
+        name: 'calculateTotals() with inclusive tax',
+        fn: () => {
+          const lines = [{ qty: 1, price: 114 }];
+          const result = calculateTotals(lines, 'none', 0, 14, true);
+          assert(result.subtotal === 114, 'subtotal 114');
+          assert(result.total === 114, 'total 114');
+          assert(result.tax === 14, 'tax 14');
+          assert(result.afterDiscount === 100, 'afterDiscount 100');
+        }
+      },
+      {
+        name: 'calculateBalance() returns remaining amount',
+        fn: () => {
+          assert(calculateBalance(500, [{ amount: 100 }, { amount: 50 }]) === 350, 'balance 350');
+          assert(calculateBalance(100, [{ amount: 100 }]) === 0, 'balance 0');
+          assert(calculateBalance(100, []) === 100, 'balance 100');
+        }
+      },
+      {
+        name: 'deriveStatus() returns correct status',
+        fn: () => {
+          assert(deriveStatus({ total: 0, payments: [] }) === 'draft', 'zero total = draft');
+          assert(deriveStatus({ total: 100, payments: [], sent: false }) === 'draft', 'not sent = draft');
+          assert(deriveStatus({ total: 100, payments: [], sent: true }) === 'sent', 'sent = sent');
+          assert(deriveStatus({ total: 100, payments: [{ amount: 50 }] }) === 'partial', 'partial paid = partial');
+          assert(deriveStatus({ total: 100, payments: [{ amount: 100 }] }) === 'paid', 'fully paid = paid');
+          assert(deriveStatus({ total: 100, payments: [{ amount: 150 }] }) === 'paid', 'overpaid = paid');
+          
+          const overdueInvoice = { total: 100, payments: [], dueDate: '2020-01-01', sent: true };
+          assert(deriveStatus(overdueInvoice) === 'overdue', 'past due = overdue');
+        }
+      },
+      {
+        name: 'generateNumber() formats correctly',
+        fn: () => {
+          assert(generateNumber('INV', 2026, 1) === 'INV-2026-0001', 'INV-2026-0001');
+          assert(generateNumber('QUO', 2026, 42) === 'QUO-2026-0042', 'QUO-2026-0042');
+          assert(generateNumber('INV', 2026, 1234) === 'INV-2026-1234', 'INV-2026-1234');
+        }
+      },
+      {
+        name: 'getNextCounter() increments correctly',
+        fn: () => {
+          const counters = { 'invoice-2026': 5 };
+          assert(getNextCounter(counters, 'invoice', 2026) === 6, 'next is 6');
+          assert(getNextCounter({}, 'quote', 2026) === 1, 'first is 1');
+        }
+      },
+      {
+        name: 'checkFreeLimit() enforces invoice limit',
+        fn: () => {
+          const invoices = [
+            { date: todayISO(), status: 'sent', createdAt: todayISO() },
+            { date: todayISO(), status: 'paid', createdAt: todayISO() },
+            { date: todayISO(), status: 'sent', createdAt: todayISO() }
+          ];
+          const quotes = [];
+          const result = checkFreeLimit(invoices, quotes, 'invoice');
+          assert(result.allowed === false, 'not allowed');
+          assert(result.count === 3, 'count 3');
+          assert(result.limit === 3, 'limit 3');
+        }
+      },
+      {
+        name: 'checkFreeLimit() allows under limit',
+        fn: () => {
+          const invoices = [
+            { date: todayISO(), status: 'sent', createdAt: todayISO() }
+          ];
+          const quotes = [];
+          const result = checkFreeLimit(invoices, quotes, 'invoice');
+          assert(result.allowed === true, 'allowed');
+          assert(result.count === 1, 'count 1');
+        }
+      },
+      {
+        name: 'validateLicenseKey() validates format',
+        fn: () => {
+          assert(validateLicenseKey('invalid') === false, 'invalid format');
+          assert(validateLicenseKey('') === false, 'empty string');
+          assert(validateLicenseKey(null) === false, 'null');
+        }
+      },
+      {
+        name: 'formatNumber() uses Western digits',
+        fn: () => {
+          const formatted = formatNumber(1234.56);
+          assert(!/[\u0660-\u0669]/.test(formatted), 'no Arabic-Indic digits');
+        }
+      },
+      {
+        name: 'escapeHtml() escapes special characters',
+        fn: () => {
+          assert(escapeHtml('<script>') === '&lt;script&gt;', 'escapes < >');
+          assert(escapeHtml('"test"') === '&quot;test&quot;', 'escapes quotes');
+          assert(escapeHtml("'test'") === '&#039;test&#039;', 'escapes single quotes');
+          assert(escapeHtml('&') === '&amp;', 'escapes ampersand');
+          assert(escapeHtml('') === '', 'empty string');
+        }
+      },
+      {
+        name: 'monthlyAggregation() returns 6 months of data',
+        fn: () => {
+          const invoices = [
+            { date: '2026-01-15', total: 1000, payments: [{ amount: 1000 }], status: 'paid' },
+            { date: '2026-02-15', total: 2000, payments: [], status: 'sent' }
+          ];
+          const expenses = [
+            { date: '2026-01-10', amount: 100 },
+            { date: '2026-02-10', amount: 200 }
+          ];
+          const result = monthlyAggregation(invoices, expenses, 6);
+          assert(result.length === 6, '6 months');
+          assert(typeof result[0].revenue === 'number', 'revenue is number');
+          assert(typeof result[0].expenses === 'number', 'expenses is number');
+          assert(typeof result[0].net === 'number', 'net is number');
+        }
+      },
+      {
+        name: 'agingBuckets() categorizes overdue invoices',
+        fn: () => {
+          const pastDate = (days) => {
+            const d = new Date();
+            d.setDate(d.getDate() - days);
+            return d.toISOString().split('T')[0];
+          };
+          
+          const invoices = [
+            { id: '1', total: 1000, payments: [], dueDate: pastDate(10), status: 'sent' },
+            { id: '2', total: 2000, payments: [], dueDate: pastDate(45), status: 'sent' },
+            { id: '3', total: 3000, payments: [], dueDate: pastDate(75), status: 'sent' },
+            { id: '4', total: 4000, payments: [], dueDate: pastDate(100), status: 'sent' },
+            { id: '5', total: 5000, payments: [{ amount: 5000 }], dueDate: pastDate(10), status: 'paid' }
+          ];
+          
+          const buckets = agingBuckets(invoices);
+          assert(buckets['0-30'].amount === 1000, '0-30 bucket');
+          assert(buckets['31-60'].amount === 2000, '31-60 bucket');
+          assert(buckets['61-90'].amount === 3000, '61-90 bucket');
+          assert(buckets['90+'].amount === 4000, '90+ bucket');
+        }
+      },
+      {
+        name: 'calculatePL() computes profit and loss',
+        fn: () => {
+          const invoices = [
+            { date: '2026-06-15', total: 10000, payments: [{ amount: 10000 }], status: 'paid' },
+            { date: '2026-06-20', total: 5000, payments: [], status: 'sent' }
+          ];
+          const expenses = [
+            { date: '2026-06-10', amount: 2000 },
+            { date: '2026-06-15', amount: 1000 }
+          ];
+          
+          const pl = calculatePL(invoices, expenses, '2026-06-01', '2026-06-30');
+          assert(pl.revenue === 10000, 'revenue 10000');
+          assert(pl.expenses === 3000, 'expenses 3000');
+          assert(pl.netProfit === 7000, 'netProfit 7000');
+          assert(pl.invoiceCount === 1, 'invoiceCount 1');
+        }
+      },
+      {
+        name: 'invoicesToCSV() generates valid CSV',
+        fn: () => {
+          const invoices = [
+            { 
+              id: '1', number: 'INV-2026-0001', date: '2026-06-15', dueDate: '2026-06-29',
+              clientId: 'c1', currency: 'EGP', total: 1000,
+              items: [{ qty: 1, price: 1000 }],
+              discountType: 'none', discountValue: 0, taxRate: 14, pricesIncludeTax: false,
+              payments: [], status: 'paid'
+            }
+          ];
+          const clients = [{ id: 'c1', name: 'Test Client', email: 'test@example.com' }];
+          
+          const csv = invoicesToCSV(invoices, clients);
+          const lines = csv.split('\n');
+          assert(lines.length === 2, 'header + 1 row');
+          assert(lines[0].includes('Number'), 'has header');
+          assert(lines[1].includes('INV-2026-0001'), 'has invoice number');
+          assert(lines[1].includes('Test Client'), 'has client name');
+        }
+      }
+    ];
+
+    // Simple assert function
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || 'Assertion failed');
+      }
+    }
+
+    // Run tests
+    const resultsDiv = document.getElementById('results');
+    const summaryDiv = document.getElementById('summary');
+    let passed = 0;
+    let failed = 0;
+
+    tests.forEach(test => {
+      const div = document.createElement('div');
+      div.className = 'test';
+      
+      try {
+        test.fn();
+        div.classList.add('pass');
+        div.textContent = '✓ ' + test.name;
+        passed++;
+      } catch (e) {
+        div.classList.add('fail');
+        div.innerHTML = '✗ ' + test.name + '<div class="error">' + e.message + '</div>';
+        failed++;
+      }
+      
+      resultsDiv.appendChild(div);
+    });
+
+    summaryDiv.textContent = passed + ' passed, ' + failed + ' failed';
+    summaryDiv.style.color = failed > 0 ? '#721c24' : '#155724';
+    summaryDiv.style.background = failed > 0 ? '#f8d7da' : '#d4edda';
+  </script>
+</body>
+</html>

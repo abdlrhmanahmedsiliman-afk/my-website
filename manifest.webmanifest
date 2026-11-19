@@ -1,0 +1,21 @@
+{
+  "name": "كشف",
+  "short_name": "كشف",
+  "description": "تطبيق الفوترة والمالية للمستقلين وأصحاب الأعمال الصغيرة",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F1E8",
+  "theme_color": "#0C7B66",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "lang": "ar",
+  "dir": "rtl"
+}

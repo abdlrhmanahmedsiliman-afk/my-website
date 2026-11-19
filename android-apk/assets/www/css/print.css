@@ -1,0 +1,552 @@
+/* Print Stylesheet - Only for Invoice Printing */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+@media print {
+  /* Reset the app shell so it never creates a trailing blank page. */
+  html,
+  body,
+  #app {
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important;
+    color: #10201B !important;
+    font-size: 11pt !important;
+    line-height: 1.45 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #app > *:not(#printRoot) {
+    display: none !important;
+  }
+
+  #printRoot {
+    display: block !important;
+    position: static !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #printRoot > * {
+    display: block !important;
+  }
+
+  #printRoot .invoice-print-root {
+    display: block !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  #printRoot .invoice-template {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 14mm 12mm !important;
+    box-sizing: border-box !important;
+    background: #FFFFFF !important;
+    color: #10201B !important;
+    font-family: "IBM Plex Sans Arabic", "Cairo", Tahoma, system-ui, sans-serif !important;
+    font-size: 10pt !important;
+    line-height: 1.45 !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .invoice-template > *:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Header: logo + invoice identity */
+  #printRoot .invoice-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 8mm !important;
+    margin-bottom: 6mm !important;
+    padding-bottom: 3mm !important;
+    border-bottom: 2.5pt solid #0C7B66 !important;
+  }
+
+  #printRoot .invoice-left {
+    flex: 0 0 18mm !important;
+    width: 18mm !important;
+    height: 18mm !important;
+  }
+
+  #printRoot .invoice-right {
+    flex: 1 !important;
+    text-align: left !important;
+  }
+
+  [dir="rtl"] #printRoot .invoice-right {
+    text-align: right !important;
+  }
+
+  #printRoot .invoice-title {
+    font-size: 26pt !important;
+    line-height: 1.05 !important;
+    font-weight: 700 !important;
+    color: #0C7B66 !important;
+    margin: 0 0 1.5mm !important;
+  }
+
+  #printRoot .invoice-number {
+    font-size: 10pt !important;
+    font-weight: 600 !important;
+    font-variant-numeric: tabular-nums !important;
+    font-family: "SF Mono", "Fira Code", monospace !important;
+    color: #10201B !important;
+  }
+
+  #printRoot .invoice-dates {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 3mm 6mm !important;
+    margin-top: 1.5mm !important;
+    font-size: 8.5pt !important;
+    color: #52635B !important;
+  }
+
+  /* From / To: client details stay visible in the header area */
+  #printRoot .from-to {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 8mm !important;
+    margin-bottom: 5mm !important;
+  }
+
+  #printRoot .business-info,
+  #printRoot .client-info-box {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+  }
+
+  #printRoot .section-label {
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    color: #52635B !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    margin-bottom: 1.2mm !important;
+  }
+
+  #printRoot .business-name,
+  #printRoot .client-name {
+    font-size: 12pt !important;
+    font-weight: 700 !important;
+    color: #10201B !important;
+    line-height: 1.3 !important;
+  }
+
+  #printRoot .business-contact,
+  #printRoot .client-contact {
+    font-size: 8.5pt !important;
+    color: #52635B !important;
+    line-height: 1.5 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  /* Items table */
+  #printRoot .items-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 4mm !important;
+    font-size: 9pt !important;
+    page-break-inside: auto !important;
+  }
+
+  #printRoot .items-table thead {
+    display: table-header-group !important;
+  }
+
+  #printRoot .items-table th {
+    background: #DCEFE8 !important;
+    color: #0A5B4B !important;
+    padding: 2.2mm 2.5mm !important;
+    text-align: start !important;
+    font-size: 8pt !important;
+    font-weight: 700 !important;
+    border-bottom: 1pt solid #B9DCD1 !important;
+  }
+
+  #printRoot .items-table td {
+    padding: 2.2mm 2.5mm !important;
+    border-bottom: 0.6pt solid #E1DED4 !important;
+    vertical-align: top !important;
+    font-size: 9pt !important;
+    color: #10201B !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  #printRoot .items-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .items-table .text-center {
+    text-align: center !important;
+  }
+
+  #printRoot .items-table .text-right {
+    text-align: left !important;
+  }
+
+  [dir="rtl"] #printRoot .items-table .text-right {
+    text-align: right !important;
+  }
+
+  /* Totals */
+  #printRoot .totals {
+    width: 100% !important;
+    max-width: 85mm !important;
+    margin-inline-start: auto !important;
+    margin-top: 1mm !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .totals-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    gap: 6mm !important;
+    padding: 1mm 0 !important;
+    font-size: 9pt !important;
+    color: #10201B !important;
+  }
+
+  #printRoot .totals-row.grand {
+    margin-top: 1mm !important;
+    padding-top: 2mm !important;
+    border-top: 1.5pt solid #0C7B66 !important;
+    font-size: 13pt !important;
+    font-weight: 700 !important;
+    color: #0C7B66 !important;
+  }
+
+  #printRoot .totals-row.paid {
+    color: #0C7B66 !important;
+  }
+
+  #printRoot .totals-row.balance {
+    color: #C0443A !important;
+    font-weight: 700 !important;
+  }
+
+  /* Status + notes */
+  #printRoot .status-badge {
+    display: inline-block !important;
+    align-self: flex-start !important;
+    margin-top: 3mm !important;
+    padding: 1mm 3mm !important;
+    border-radius: 999px !important;
+    font-size: 8pt !important;
+    font-weight: 700 !important;
+    border: 0.6pt solid currentColor !important;
+  }
+
+  #printRoot .notes {
+    margin-top: 4mm !important;
+    padding-top: 3mm !important;
+    border-top: 0.6pt solid #E1DED4 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .notes-label {
+    font-size: 7.5pt !important;
+    font-weight: 700 !important;
+    color: #52635B !important;
+    margin-bottom: 1mm !important;
+  }
+
+  #printRoot .notes-text {
+    font-size: 8.5pt !important;
+    color: #10201B !important;
+    line-height: 1.5 !important;
+  }
+
+  #printRoot .terms-text {
+    font-size: 8pt !important;
+    color: #52635B !important;
+    margin-top: 2mm !important;
+    line-height: 1.45 !important;
+  }
+
+  /* Logo: keep the whole mark visible instead of cropping it */
+  #printRoot .logo-print {
+    width: 18mm !important;
+    height: 18mm !important;
+    border-radius: 3mm !important;
+    background: #FFFFFF !important;
+    border: 0.6pt solid #DCEFE8 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #0C7B66 !important;
+    font-size: 18pt !important;
+    font-weight: 700 !important;
+    overflow: hidden !important;
+    padding: 1mm !important;
+  }
+
+  #printRoot .logo-print img,
+  #printRoot .invoice-left img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    image-rendering: auto !important;
+  }
+
+  /* Modern template */
+  #printRoot .template-modern .invoice-header {
+    background: #0A1914 !important;
+    color: #FFFFFF !important;
+    padding: 6mm !important;
+    margin: -14mm -12mm 6mm !important;
+    border-radius: 0 !important;
+    border-bottom: none !important;
+  }
+
+  #printRoot .template-modern .invoice-title {
+    color: #FFFFFF !important;
+  }
+
+  #printRoot .template-modern .invoice-number,
+  #printRoot .template-modern .invoice-dates {
+    color: #D8E6DF !important;
+  }
+
+  #printRoot .template-modern .items-table th {
+    background: #0A1914 !important;
+    color: #FFFFFF !important;
+    border-bottom-color: #0A1914 !important;
+  }
+
+  #printRoot .template-modern .totals {
+    background: #0A1914 !important;
+    color: #FFFFFF !important;
+    padding: 4mm !important;
+    border-radius: 3mm !important;
+  }
+
+  #printRoot .template-modern .totals-row {
+    color: #FFFFFF !important;
+  }
+
+  #printRoot .template-modern .totals-row.grand {
+    color: #D9A541 !important;
+    border-top-color: #D9A541 !important;
+  }
+
+  /* Simple template */
+  #printRoot .template-simple .invoice-header {
+    border-bottom: 0.8pt solid #E1DED4 !important;
+    padding-bottom: 4mm !important;
+    margin-bottom: 5mm !important;
+  }
+
+  #printRoot .template-simple .invoice-title {
+    color: #10201B !important;
+  }
+
+  #printRoot .template-simple .items-table th {
+    background: transparent !important;
+    color: #52635B !important;
+    border-bottom: 0.8pt solid #E1DED4 !important;
+  }
+
+  #printRoot .template-simple .totals {
+    border-top: 0.8pt solid #E1DED4 !important;
+    padding-top: 3mm !important;
+  }
+
+  /* Watermark for free plan */
+  #printRoot .invoice-template.free::after {
+    content: 'كشف · النسخة المجانية' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) rotate(-30deg) !important;
+    font-size: 58pt !important;
+    font-weight: 700 !important;
+    color: rgba(12, 123, 102, 0.06) !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+    font-family: "IBM Plex Sans Arabic", "Cairo", Tahoma, system-ui, sans-serif !important;
+  }
+
+  #printRoot .invoice-template.pro::after {
+    display: none !important;
+  }
+
+  #printRoot .invoice-template * {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+
+  /* iOS Safari: never split a row/totals/notes block across pages. */
+  #printRoot .items-table tr,
+  #printRoot .totals,
+  #printRoot .totals-row,
+  #printRoot .notes {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* Screen preview of print layout */
+.invoice-print-preview {
+  background: white !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-lg) !important;
+  overflow: hidden !important;
+}
+
+.invoice-sheet-preview {
+  width: 100% !important;
+  aspect-ratio: 1.414 !important;
+  background: white !important;
+}
+
+.invoice-template-preview {
+  padding: var(--space-6) var(--space-8) !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
+}
+
+/* Watermark for preview */
+.invoice-template-preview.free::after {
+  content: 'كشف · النسخة المجانية' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) rotate(-30deg) !important;
+  font-size: 48px !important;
+  font-weight: 700 !important;
+  color: rgba(12, 123, 102, 0.06) !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  font-family: var(--font-ar) !important;
+}
+
+.invoice-template-preview * {
+  position: relative !important;
+  z-index: 1 !important;
+}
+/* Client statement (iOS-safe in-page print surface) */
+@media print {
+  #printRoot .statement-print-root {
+    display: block !important;
+    padding: 15mm !important;
+    background: #FFFFFF !important;
+    color: #10201B !important;
+    font-family: "IBM Plex Sans Arabic", "Cairo", Tahoma, system-ui, sans-serif !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  #printRoot .statement-header {
+    text-align: center !important;
+    border-bottom: 2px solid #0C7B66 !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 20px !important;
+  }
+
+  #printRoot .statement-title {
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    color: #0C7B66 !important;
+  }
+
+  #printRoot .statement-client {
+    font-size: 14px !important;
+    color: #33443D !important;
+    margin-top: 4px !important;
+  }
+
+  #printRoot .statement-period {
+    font-size: 11px !important;
+    color: #6B7A73 !important;
+  }
+
+  #printRoot .statement-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 11px !important;
+  }
+
+  #printRoot .statement-table th,
+  #printRoot .statement-table td {
+    padding: 6px 8px !important;
+    border-bottom: 1px solid #E9E6DD !important;
+    text-align: right !important;
+    background: transparent !important;
+  }
+
+  #printRoot .statement-table th {
+    background: #F6F1E8 !important;
+    color: #6B7A73 !important;
+    font-weight: 600 !important;
+  }
+
+  #printRoot .statement-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .statement-table .amount {
+    font-family: "SF Mono", "Fira Code", monospace !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  #printRoot .statement-table .credit,
+  #printRoot .statement-totals .credit {
+    color: #0C7B66 !important;
+  }
+
+  #printRoot .statement-table .debit,
+  #printRoot .statement-totals .debit {
+    color: #C0443A !important;
+  }
+
+  #printRoot .statement-totals {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 30px !important;
+    margin-top: 20px !important;
+    padding-top: 10px !important;
+    border-top: 2px solid #E9E6DD !important;
+    font-weight: 600 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  #printRoot .statement-total-label {
+    color: #6B7A73 !important;
+  }
+}
