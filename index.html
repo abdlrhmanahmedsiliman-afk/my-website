@@ -4,19 +4,77 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0C7B66">
-  <meta name="description" content="كشف - تطبيق الفوترة والمالية للمستقلين وأصحاب الأعمال الصغيرة">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+  <meta name="description" content="كشف روكيت رو (Kashf Rocket Ro) منصة عربية متكاملة للفوترة الإلكترونية، نقاط البيع، إدارة المخزون، الرواتب، والتقارير المالية مع وكيل ذكي.">
+  <meta name="keywords" content="كشف, كشف روكيت رو, روكيت رو, Kashf, Rocket Ro, تطبيق فواتير, محاسبة, نقطة بيع, إدارة المخزون, الرواتب">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:site_name" content="كشف روكيت رو">
+  <meta property="og:title" content="كشف روكيت رو (Kashf) – الفوترة وإدارة الأعمال والمخزون">
+  <meta property="og:description" content="كشف روكيت رو (Kashf Rocket Ro) منصة عربية متكاملة للفوترة الإلكترونية، نقاط البيع، إدارة المخزون، الرواتب، والتقارير المالية مع وكيل ذكي.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="كشف روكيت رو (Kashf) – الفوترة وإدارة الأعمال والمخزون">
+  <meta name="twitter:description" content="كشف روكيت رو (Kashf Rocket Ro) منصة عربية متكاملة للفوترة الإلكترونية، نقاط البيع، إدارة المخزون، الرواتب، والتقارير المالية مع وكيل ذكي.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://*.supabase.co wss://*.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="referrer" content="no-referrer">
-  <title>كشف</title>
-  <link rel="manifest" href="manifest.webmanifest">
+  <title>كشف روكيت رو (Kashf) – الفوترة وإدارة الأعمال والمخزون</title>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "كشف روكيت رو",
+    "alternateName": ["كشف", "روكيت رو", "Kashf", "Rocket Ro", "Kashf Rocket Ro"],
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "All",
+    "inLanguage": ["ar", "en"],
+    "description": "منصة عربية متكاملة للفوترة الإلكترونية، نقاط البيع، إدارة المخزون، الرواتب، والتقارير المالية مع وكيل ذكي.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EGP"
+    }
+  }
+  </script>
+  <script>
+    (function() {
+      var canonicalHref = window.location.origin + window.location.pathname;
+      var canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      canonical.href = canonicalHref;
+      document.head.appendChild(canonical);
+      var ogUrl = document.createElement('meta');
+      ogUrl.setAttribute('property', 'og:url');
+      ogUrl.content = canonicalHref;
+      document.head.appendChild(ogUrl);
+    })();
+  </script>
+  <script>
+    window.__KASHF_IS_PREVIEW__ = (function() {
+      try {
+        if (window.self !== window.top) return true;
+      } catch (e) {
+        return true;
+      }
+      var host = location.hostname || '';
+      return /\.run\.app$/i.test(host) ||
+        /aistudio|googleusercontent/i.test(host) ||
+        location.search.indexOf('no-sw') !== -1;
+    })();
+    if (!window.__KASHF_IS_PREVIEW__) {
+      var manifestEl = document.createElement('link');
+      manifestEl.rel = 'manifest';
+      manifestEl.href = 'manifest.webmanifest';
+      document.head.appendChild(manifestEl);
+    }
+  </script>
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon.svg">
-  <link rel="stylesheet" href="css/tokens.css?v=12">
-  <link rel="stylesheet" href="css/base.css?v=12">
-  <link rel="stylesheet" href="css/components.css?v=12">
-  <link rel="stylesheet" href="css/pages.css?v=12">
-  <link rel="stylesheet" href="css/motion.css?v=12">
-  <link rel="stylesheet" href="css/print.css?v=12" media="print">
+  <link rel="stylesheet" href="css/tokens.css?v=14">
+  <link rel="stylesheet" href="css/base.css?v=14">
+  <link rel="stylesheet" href="css/components.css?v=14">
+  <link rel="stylesheet" href="css/pages.css?v=14">
+  <link rel="stylesheet" href="css/motion.css?v=14">
+  <link rel="stylesheet" href="css/print.css?v=14" media="print">
 </head>
 <body>
   <a class="skip-link" href="#mainContent">تخطي إلى المحتوى</a>
@@ -28,6 +86,7 @@
       </button>
       <h1 class="page-title" id="pageTitle">لوحة التحكم</h1>
       <div class="top-bar-actions">
+        <button type="button" class="top-auth-btn" id="topAuthBtn" aria-label="تسجيل الدخول باستخدام Google"></button>
         <button class="icon-btn primary" id="quickCreateBtn" aria-label="إنشاء سريع">
           <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
         </button>
@@ -61,6 +120,7 @@
             <div class="plan-badge" id="drawerPlanBadge">مجاني</div>
           </div>
         </div>
+        <div class="drawer-auth-slot" id="drawerAuthSlot"></div>
         <nav class="drawer-nav">
           <div class="nav-section">
             <span class="nav-section-label" data-i18n="dashboard">لوحة التحكم</span>
@@ -244,72 +304,87 @@
     <div id="printRoot" aria-hidden="true"></div>
   </div>
 
-  <script src="js/i18n-ar1.js?v=12"></script>
-  <script src="js/i18n-ar2.js?v=12"></script>
-  <script src="js/i18n-ar3.js?v=12"></script>
-  <script src="js/i18n-en1.js?v=12"></script>
-  <script src="js/i18n-en2.js?v=12"></script>
-  <script src="js/i18n-en3.js?v=12"></script>
-  <script src="js/i18n.js?v=12"></script>
-  <script src="js/icons.js?v=12"></script>
-  <script src="js/logic.js?v=12"></script>
-  <script src="js/logic-utils.js?v=12"></script>
-  <script src="js/logic-store.js?v=12"></script>
-  <script src="js/logic-finance.js?v=12"></script>
-  <script src="js/store.js?v=12"></script>
-  <script src="js/store-crud.js?v=12"></script>
-  <script src="js/store-ops.js?v=12"></script>
-  <script src="js/db.js?v=12"></script>
-  <script src="js/bus.js?v=12"></script>
-  <script src="js/profiles.js?v=12"></script>
-  <script src="js/auth.js?v=12"></script>
-  <script src="js/plan.js?v=12"></script>
-  <script src="js/templates.js?v=12"></script>
-  <script src="js/ui.js?v=12"></script>
-  <script src="js/ui-overlays.js?v=12"></script>
-  <script src="js/charts.js?v=12"></script>
-  <script src="js/router.js?v=12"></script>
-  <script src="vendor/gsap/gsap.min.js?v=12"></script>
-  <script src="vendor/gsap/ScrollTrigger.min.js?v=12"></script>
-  <script src="vendor/gsap/SplitText.min.js?v=12"></script>
+  <script src="js/i18n-ar1.js?v=14"></script>
+  <script src="js/i18n-ar2.js?v=14"></script>
+  <script src="js/i18n-ar3.js?v=14"></script>
+  <script src="js/i18n-en1.js?v=14"></script>
+  <script src="js/i18n-en2.js?v=14"></script>
+  <script src="js/i18n-en3.js?v=14"></script>
+  <script src="js/i18n.js?v=14"></script>
+  <script src="js/icons.js?v=14"></script>
+  <script src="js/logic.js?v=14"></script>
+  <script src="js/logic-utils.js?v=14"></script>
+  <script src="js/logic-store.js?v=14"></script>
+  <script src="js/logic-finance.js?v=14"></script>
+  <script src="js/store.js?v=14"></script>
+  <script src="js/store-crud.js?v=14"></script>
+  <script src="js/store-ops.js?v=14"></script>
+  <script src="js/db.js?v=14"></script>
+  <script src="js/bus.js?v=14"></script>
+  <script src="js/profiles.js?v=14"></script>
+  <script src="js/auth.js?v=14"></script>
+  <script src="vendor/supabase/supabase.js?v=14"></script>
+  <script src="js/supabase-auth.js?v=14"></script>
+  <script src="js/plan.js?v=14"></script>
+  <script src="js/templates.js?v=14"></script>
+  <script src="js/ui.js?v=14"></script>
+  <script src="js/ui-overlays.js?v=14"></script>
+  <script src="js/charts.js?v=14"></script>
+  <script src="js/router.js?v=14"></script>
+  <script src="vendor/gsap/gsap.min.js?v=14"></script>
+  <script src="vendor/gsap/ScrollTrigger.min.js?v=14"></script>
+  <script src="vendor/gsap/SplitText.min.js?v=14"></script>
   <script>
     // Page modules live under the Kashf.pages namespace.
     window.Kashf = window.Kashf || {};
     Kashf.pages = Kashf.pages || {};
   </script>
-  <script src="js/pages/dashboard.js?v=12"></script>
-  <script src="js/pages/invoices.js?v=12"></script>
-  <script src="js/pages/invoice-editor.js?v=12"></script>
-  <script src="js/pages/invoice-editor-view.js?v=12"></script>
-  <script src="js/pages/invoice-editor-actions.js?v=12"></script>
-  <script src="js/pages/quotes.js?v=12"></script>
-  <script src="js/pages/clients.js?v=12"></script>
-  <script src="js/pages/expenses.js?v=12"></script>
-  <script src="js/pages/inventory-view.js?v=12"></script>
-  <script src="js/pages/inventory.js?v=12"></script>
-  <script src="js/pages/inventory-actions.js?v=12"></script>
-  <script src="js/pages/employees.js?v=12"></script>
-  <script src="js/pages/employees-actions.js?v=12"></script>
-  <script src="js/pages/advisor.js?v=12"></script>
-  <script src="js/pages/reports-view.js?v=12"></script>
-  <script src="js/pages/reports.js?v=12"></script>
-  <script src="js/pages/settings.js?v=12"></script>
-  <script src="js/pages/products.js?v=12"></script>
-  <script src="js/pages/pos.js?v=12"></script>
-  <script src="js/pages/budget.js?v=12"></script>
-  <script src="js/pages/analysis.js?v=12"></script>
-  <script src="js/pages/stocktake.js?v=12"></script>
-  <script src="js/search.js?v=12"></script>
-  <script src="js/motion.js?v=12"></script>
-  <script src="js/intro.js?v=12"></script>
-  <script src="js/onboarding.js?v=12"></script>
-  <script src="js/app.js?v=12"></script>
-  <script src="js/app-shell.js?v=12"></script>
+  <script src="js/pages/dashboard.js?v=14"></script>
+  <script src="js/pages/invoices.js?v=14"></script>
+  <script src="js/pages/invoice-editor.js?v=14"></script>
+  <script src="js/pages/invoice-editor-view.js?v=14"></script>
+  <script src="js/pages/invoice-editor-actions.js?v=14"></script>
+  <script src="js/pages/quotes.js?v=14"></script>
+  <script src="js/pages/clients.js?v=14"></script>
+  <script src="js/pages/expenses.js?v=14"></script>
+  <script src="js/pages/inventory-view.js?v=14"></script>
+  <script src="js/pages/inventory.js?v=14"></script>
+  <script src="js/pages/inventory-actions.js?v=14"></script>
+  <script src="js/pages/employees.js?v=14"></script>
+  <script src="js/pages/employees-actions.js?v=14"></script>
+  <script src="js/pages/advisor.js?v=14"></script>
+  <script src="js/pages/reports-view.js?v=14"></script>
+  <script src="js/pages/reports.js?v=14"></script>
+  <script src="js/pages/settings-view.js?v=14"></script>
+  <script src="js/pages/settings.js?v=14"></script>
+  <script src="js/pages/products.js?v=14"></script>
+  <script src="js/pages/pos.js?v=14"></script>
+  <script src="js/pages/budget.js?v=14"></script>
+  <script src="js/agent.js?v=14"></script>
+  <script src="js/pages/analysis.js?v=14"></script>
+  <script src="js/pages/stocktake.js?v=14"></script>
+  <script src="js/search.js?v=14"></script>
+  <script src="js/motion.js?v=14"></script>
+  <script src="js/intro.js?v=14"></script>
+  <script src="js/onboarding.js?v=14"></script>
+  <script src="js/app.js?v=14"></script>
+  <script src="js/app-shell.js?v=14"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'https:';
-      if (isLocal) {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+      if (window.__KASHF_IS_PREVIEW__) {
+        navigator.serviceWorker.getRegistrations()
+          .then((regs) => Promise.all(regs.map((reg) => reg.unregister())))
+          .catch(() => {});
+        if (window.caches && caches.keys) {
+          caches.keys()
+            .then((keys) => Promise.all(keys.map((key) => caches.delete(key))))
+            .catch(() => {});
+        }
+      } else {
+        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'https:';
+        if (isLocal) {
+          navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
       }
     }
   </script>

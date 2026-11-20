@@ -1,0 +1,10 @@
+{
+  "name": "كشف",
+  "description": "تطبيق الفوترة والمالية للمستقلين وأصحاب الأعمال الصغيرة",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

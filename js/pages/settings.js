@@ -253,14 +253,17 @@ Kashf.pages.settings = (function() {
         Kashf.onboarding.show();
       }
     });
-    // Save AI key
-    const saveAi = () => {
-      const key = document.getElementById('aiApiKey')?.value || '';
-      const endpoint = document.getElementById('aiApiEndpoint')?.value || '';
-      store.updateSettings({ aiApiKey: key.trim(), aiApiEndpoint: endpoint.trim(), aiEnabled: !!key.trim() });
-    };
-    document.getElementById('aiApiKey')?.addEventListener('change', saveAi);
-    document.getElementById('aiApiEndpoint')?.addEventListener('change', saveAi);
+    // Google Sign-In / Sign-Out (Supabase)
+    document.getElementById('btnGoogleSignIn')?.addEventListener('click', () => {
+      if (Kashf.supabaseAuth && Kashf.supabaseAuth.signInWithGoogle) {
+        Kashf.supabaseAuth.signInWithGoogle().catch(() => {});
+      }
+    });
+    document.getElementById('btnGoogleSignOut')?.addEventListener('click', () => {
+      if (Kashf.supabaseAuth && Kashf.supabaseAuth.signOut) {
+        Kashf.supabaseAuth.signOut().catch(() => {});
+      }
+    });
   }
 
   function saveSettings() {

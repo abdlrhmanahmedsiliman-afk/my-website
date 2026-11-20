@@ -129,6 +129,26 @@ Kashf.pages.pos = (function() {
   function inputParent() { return document.getElementById('posBarcodeInput').parentElement; }
   function escapeHtml(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c])); }
 
+  function startCameraScan() {
+    const input = document.getElementById('posBarcodeInput');
+    if (input) input.focus();
+    ui.toastWarning(
+      i18n.getCurrentLang() === 'en'
+        ? 'Please use a barcode scanner or enter the code manually'
+        : 'الرجاء استخدام قارئ الباركود أو إدخال الرمز يدوياً'
+    );
+  }
+
+  function openQuickAdd(code) {
+    if (Kashf.pages.inventory && typeof Kashf.pages.inventory.openProductModal === 'function') {
+      Kashf.pages.inventory.openProductModal();
+      setTimeout(() => {
+        const barcodeInput = document.querySelector('#productForm input[name="barcode"]');
+        if (barcodeInput && code) barcodeInput.value = code;
+      }, 80);
+    }
+  }
+
   function addByBarcode(code) {
     if (!code) return;
     const p = products.find(x => x.barcode === code || x.barcodeCarton === code);
@@ -329,11 +349,11 @@ Kashf.pages.pos = (function() {
   }
 
   function openShiftUI() {
-    // Simple shift: use existing shift or create new.
+    // Simple shift: use existing shift or create new from store settings.
     const existing = JSON.parse(localStorage.getItem('kashf_pos_shift') || 'null');
     if (existing && !existing.closedAt) { shift = existing; cashier = { id: 'cashier', name: i18n.t('cashier') || 'الكاشير' }; return; }
-    const opening = prompt(i18n.t('openingCash') || 'مبلغ الصندوق عند opening:');
-    shift = { id: logic.generateId(), openedAt: new Date().toISOString(), openingCash: Number(opening) || 0, cashIn: 0, cashOut: 0, closedAt: null };
+    const opening = Number(store.getSettings().openingCash) || 0;
+    shift = { id: logic.generateId(), openedAt: new Date().toISOString(), openingCash: opening, cashIn: 0, cashOut: 0, closedAt: null };
     localStorage.setItem('kashf_pos_shift', JSON.stringify(shift));
     cashier = { id: 'cashier', name: i18n.t('cashier') || 'الكاشير' };
   }

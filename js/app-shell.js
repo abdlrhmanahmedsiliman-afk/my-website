@@ -82,7 +82,7 @@ window.Kashf = window.Kashf || {};
   }
 
   function renderQuickSearch(query) {
-    const panel = document.getElementById('st.quickSearchResults');
+    const panel = document.getElementById('quickSearchResults');
     const actions = document.getElementById('quickActions');
     if (!panel || !actions) return;
 
@@ -129,7 +129,7 @@ window.Kashf = window.Kashf || {};
   }
 
   function moveQuickSearchSelection(direction) {
-    const panel = document.getElementById('st.quickSearchResults');
+    const panel = document.getElementById('quickSearchResults');
     if (!panel) return;
     const buttons = panel.querySelectorAll('.quick-result');
     if (!buttons.length) return;
@@ -280,6 +280,7 @@ window.Kashf = window.Kashf || {};
       if (route && !route.startsWith('invoice-editor')) {
         router.handleRoute(route);
       }
+      if (Kashf.supabaseAuth && Kashf.supabaseAuth.renderControls) Kashf.supabaseAuth.renderControls();
     });
   }
 
@@ -295,6 +296,7 @@ window.Kashf = window.Kashf || {};
       planBadge.textContent = isPro ? i18n.t('pro') : i18n.t('free');
       planBadge.className = 'plan-badge ' + (isPro ? 'pro' : 'free');
     }
+    if (Kashf.supabaseAuth && Kashf.supabaseAuth.renderControls) Kashf.supabaseAuth.renderControls();
     applyProfileNav();
   }
 
@@ -366,6 +368,9 @@ window.Kashf = window.Kashf || {};
     setupQuickCreateSheet();
     setupThemeToggle();
     setupLanguageToggle();
+    if (Kashf.supabaseAuth && Kashf.supabaseAuth.bindShellButtons) {
+      Kashf.supabaseAuth.bindShellButtons(router);
+    }
   }
 
   Object.assign(app, {

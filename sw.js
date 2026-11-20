@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kashf-v12';
+const CACHE_NAME = 'kashf-v15';
 const ASSETS = [
   '/',
   '/index.html',
@@ -29,6 +29,8 @@ const ASSETS = [
   '/js/bus.js',
   '/js/profiles.js',
   '/js/auth.js',
+  '/vendor/supabase/supabase.js',
+  '/js/supabase-auth.js',
   '/js/plan.js',
   '/js/templates.js',
   '/js/ui.js',
@@ -57,10 +59,12 @@ const ASSETS = [
   '/js/pages/products.js',
   '/js/pages/pos.js',
   '/js/pages/budget.js',
+  '/js/agent.js',
   '/js/pages/analysis.js',
   '/js/pages/stocktake.js',
   '/js/pages/reports-view.js',
   '/js/pages/reports.js',
+  '/js/pages/settings-view.js',
   '/js/pages/settings.js',
   '/js/intro.js',
   '/js/onboarding.js',
@@ -98,6 +102,17 @@ self.addEventListener('fetch', (event) => {
   
   // Skip non-GET requests
   if (request.method !== 'GET') {
+    return;
+  }
+
+  // Never cache server APIs, OAuth callbacks, or crawler metadata
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/auth/callback') ||
+    url.pathname === '/healthz' ||
+    url.pathname === '/robots.txt' ||
+    url.pathname === '/sitemap.xml'
+  ) {
     return;
   }
   

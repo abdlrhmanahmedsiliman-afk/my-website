@@ -3,7 +3,7 @@ window.Kashf = window.Kashf || {};
 (function() {
   'use strict';
   const api = Kashf.pages.invoiceEditor;
-  const { st, store, i18n, logic, ui, templates, plan, icons } = api._ctx;
+  const { st, store, i18n, logic, ui, templates, plan, icons, render } = api._ctx;
 
   function markAsSent() {
     if (!st.currentInvoice || st.isQuote) return;
@@ -312,5 +312,5 @@ window.Kashf = window.Kashf || {};
   }
 
 
-  Object.assign(api, { markAsSent, openPaymentModal, fitPrintToSinglePage, printInvoice, shareInvoice, openQuickClientModal });
+  Object.assign(api, { saveInvoice, markAsSent, openPaymentModal, fitPrintToSinglePage, printInvoice, shareInvoice, openQuickClientModal });
 })();

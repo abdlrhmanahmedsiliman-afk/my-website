@@ -337,18 +337,43 @@ Kashf.pages.settingsView = (function() {
             <div class="form-group" style="margin-top:var(--space-3);">
               <button type="button" class="btn btn-secondary" id="btnRerunWizard">${icons.get('sparkle')} إعادة تشغيل معالج الإعداد</button>
             </div>
-            <div class="form-group" style="margin-top:var(--space-3);">
-              <label class="form-label" style="display:flex;align-items:center;gap:8px;">
-                <input type="checkbox" id="loginSoonToggle" disabled>
-                <span>تسجيل الدخول (قريباً)</span>
-              </label>
-              <p class="form-hint">بنية الأدوار جاهزة (مالك/مدير/كاشير/موظف) وسيتم تفعيل تسجيل الدخول لاحقاً.</p>
+            <div class="form-group" style="margin-top:var(--space-3);" id="settingsAuthSection">
+              <label class="form-label">${(i18n.getCurrentLang && i18n.getCurrentLang() === 'en') ? 'Google Account (Supabase)' : 'حساب Google (Supabase)'}</label>
+              ${(() => {
+                const ar = !(i18n.getCurrentLang && i18n.getCurrentLang() === 'en');
+                const authMod = Kashf.auth;
+                const loggedIn = authMod && authMod.isAuthenticated && authMod.isAuthenticated();
+                const authUser = loggedIn ? authMod.getUser() : null;
+                const gIcon = (Kashf.supabaseAuth && Kashf.supabaseAuth.googleIconSvg) ? Kashf.supabaseAuth.googleIconSvg() : '';
+                if (loggedIn && authUser) {
+                  const displayName = authUser.name || authUser.email || 'Google';
+                  const roleText = authMod.roleLabel ? authMod.roleLabel(authMod.getRole() || 'owner', ar ? 'ar' : 'en') : '';
+                  return `
+                    <div class="auth-account-card">
+                      ${authUser.avatarUrl
+                        ? `<img class="auth-avatar" src="${logic.escapeHtml(authUser.avatarUrl)}" alt="${logic.escapeHtml(displayName)}">`
+                        : `<div class="auth-avatar auth-avatar-fallback">${logic.escapeHtml(displayName.charAt(0).toUpperCase())}</div>`}
+                      <div class="auth-account-info">
+                        <strong>${logic.escapeHtml(displayName)}</strong>
+                        <small>${logic.escapeHtml(authUser.email || '')}${roleText ? ` · ${logic.escapeHtml(roleText)}` : ''}</small>
+                      </div>
+                      <button type="button" class="btn btn-secondary btn-sm" id="btnGoogleSignOut">${ar ? 'تسجيل الخروج' : 'Sign out'}</button>
+                    </div>
+                  `;
+                }
+                return `
+                  <button type="button" class="btn btn-google" id="btnGoogleSignIn">
+                    ${gIcon}
+                    <span>${ar ? 'تسجيل الدخول باستخدام Google' : 'Sign in with Google'}</span>
+                  </button>
+                  <p class="form-hint">${ar ? 'اربط حسابك عبر Google للمزامنة الآمنة وحماية بياناتك على السحابة.' : 'Sign in with Google via Supabase to sync and protect your account.'}</p>
+                `;
+              })()}
             </div>
             <div class="form-group" style="margin-top:var(--space-3);">
-              <label class="form-label">مفتاح API اختياري (تحليل ذكي)</label>
-              <input type="password" class="form-input" id="aiApiKey" value="${logic.escapeHtml(settings.aiApiKey || '')}" placeholder="sk-..." autocomplete="off">
-              <input type="url" class="form-input" id="aiApiEndpoint" value="${logic.escapeHtml(settings.aiApiEndpoint || '')}" placeholder="https://api.openai.com/v1" style="margin-top:8px;">
-              <p class="form-hint">معطّل افتراضياً. عند التفعيل تُرسل أرقام مجمّعة فقط (بدون بيانات عملاء خام) ويُستخدم المحرك المحلي عند أي فشل.</p>
+              <label class="form-label">الوكيل الذكي</label>
+              <p class="form-hint">يعمل الوكيل الذكي عبر خادم التطبيق الآمن باستخدام Groq وNVIDIA NIM وGemini وCloudflare Workers AI وOpenRouter مع محلل نوايا محلي فوري.</p>
+              <a class="btn btn-secondary" href="#analysis" style="margin-top:8px;">${icons.get('sparkle')} فتح المساعد الذكي</a>
             </div>
           </div>
 

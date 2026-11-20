@@ -1,7 +1,7 @@
 {
-  "name": "كشف",
+  "name": "كشف روكيت رو",
   "short_name": "كشف",
-  "description": "تطبيق الفوترة والمالية للمستقلين وأصحاب الأعمال الصغيرة",
+  "description": "كشف روكيت رو (Kashf Rocket Ro) – الفوترة وإدارة الأعمال والمخزون ونقاط البيع",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#F6F1E8",

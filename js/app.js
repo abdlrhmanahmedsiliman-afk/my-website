@@ -24,7 +24,16 @@ Kashf.app = (function() {
     // Initialize foundation: IndexedDB, event bus, profiles, auth.
     Kashf.db = Kashf.db || {};
     if (Kashf.db.init) Kashf.db.init();
-    if (Kashf.auth) Kashf.auth.loadSession();
+    if (Kashf.auth) {
+      Kashf.auth.loadSession();
+      Kashf.auth.subscribe(() => {
+        if (api.updateDrawerProfile) api.updateDrawerProfile();
+        if (Kashf.pages.settings && router.isCurrent && router.isCurrent('settings')) {
+          Kashf.pages.settings.render();
+        }
+      });
+    }
+    if (Kashf.supabaseAuth && Kashf.supabaseAuth.init) Kashf.supabaseAuth.init();
     // Detect active profile (defaults to supermarket on first launch).
     if (!localStorage.getItem('kashf_profile_id')) {
       localStorage.setItem('kashf_profile_id', 'supermarket');
@@ -96,7 +105,7 @@ Kashf.app = (function() {
   }
 
   function setupServiceWorkerUpdates() {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator) || window.__KASHF_IS_PREVIEW__) return;
     navigator.serviceWorker.ready.then((registration) => {
       registration.addEventListener('updatefound', () => {
         const worker = registration.installing;
@@ -169,24 +178,24 @@ Kashf.app = (function() {
         const page = item.dataset.page;
         if (page) {
           router.navigate(page);
-          closeDrawer();
+          if (api.closeDrawer) api.closeDrawer();
         }
       });
     });
     
     // Quick create button
-    document.getElementById('quickCreateBtn')?.addEventListener('click', openQuickCreateSheet);
+    document.getElementById('quickCreateBtn')?.addEventListener('click', () => api.openQuickCreateSheet && api.openQuickCreateSheet());
     
     // Quick create sheet close
-    document.getElementById('quickCreateClose')?.addEventListener('click', closeQuickCreateSheet);
-    document.getElementById('quickCreateBackdrop')?.addEventListener('click', closeQuickCreateSheet);
+    document.getElementById('quickCreateClose')?.addEventListener('click', () => api.closeQuickCreateSheet && api.closeQuickCreateSheet());
+    document.getElementById('quickCreateBackdrop')?.addEventListener('click', () => api.closeQuickCreateSheet && api.closeQuickCreateSheet());
     
     // Quick actions
     document.querySelectorAll('.quick-action-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
-        handleQuickAction(action);
-        closeQuickCreateSheet();
+        if (api.handleQuickAction) api.handleQuickAction(action);
+        if (api.closeQuickCreateSheet) api.closeQuickCreateSheet();
       });
     });
     
@@ -195,29 +204,29 @@ Kashf.app = (function() {
     if (quickSearchInput) {
       quickSearchInput.placeholder = i18n.t('quickSearchPlaceholder');
       quickSearchInput.addEventListener('input', ui.debounce((e) => {
-        renderQuickSearch(e.target.value);
+        if (api.renderQuickSearch) api.renderQuickSearch(e.target.value);
       }, 120));
       quickSearchInput.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown') {
           e.preventDefault();
-          moveQuickSearchSelection(1);
+          if (api.moveQuickSearchSelection) api.moveQuickSearchSelection(1);
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
-          moveQuickSearchSelection(-1);
+          if (api.moveQuickSearchSelection) api.moveQuickSearchSelection(-1);
         } else if (e.key === 'Enter') {
           const result = st.quickSearchResults[st.quickSearchActiveIndex];
           if (!result) return;
           e.preventDefault();
-          closeQuickCreateSheet();
+          if (api.closeQuickCreateSheet) api.closeQuickCreateSheet();
           router.navigate(result.route);
         }
       });
     }
 
-    document.getElementById('st.quickSearchResults')?.addEventListener('click', (e) => {
+    document.getElementById('quickSearchResults')?.addEventListener('click', (e) => {
       const button = e.target.closest('[data-route]');
       if (!button) return;
-      closeQuickCreateSheet();
+      if (api.closeQuickCreateSheet) api.closeQuickCreateSheet();
       router.navigate(button.dataset.route);
     });
 
@@ -233,8 +242,8 @@ Kashf.app = (function() {
 
       // Escape to close modals/sheets/drawer
       if (e.key === 'Escape') {
-        closeDrawer();
-        closeQuickCreateSheet();
+        if (api.closeDrawer) api.closeDrawer();
+        if (api.closeQuickCreateSheet) api.closeQuickCreateSheet();
         // Close any open modal
         document.querySelectorAll('.modal.open').forEach(m => {
           const closeBtn = m.querySelector('.modal-close');
@@ -245,7 +254,7 @@ Kashf.app = (function() {
       // Cmd/Ctrl + K for instant fuzzy search
       if (withModifier && key === 'k') {
         e.preventDefault();
-        openQuickCreateSheet();
+        if (api.openQuickCreateSheet) api.openQuickCreateSheet();
       }
       
       // Cmd/Ctrl + I (and the old Ctrl+N) for a new invoice.
@@ -255,7 +264,7 @@ Kashf.app = (function() {
         const isEditing = tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable);
         if (key === 'i' && isEditing) return;
         e.preventDefault();
-        startNewInvoice();
+        if (api.startNewInvoice) api.startNewInvoice();
       }
     });
     

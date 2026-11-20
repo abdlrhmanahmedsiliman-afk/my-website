@@ -3,7 +3,11 @@ window.Kashf = window.Kashf || {};
 Kashf.pages.inventoryView = (function() {
   'use strict';
   function main(ctx) {
-    const { i18n, icons, store, logic, CATEGORIES, st, fmt, insights, products, lowStock, fastMoving } = ctx;
+    const {
+      i18n, icons, store, logic, CATEGORIES, st, fmt, insights, products,
+      isSupermarket, totalStockValue, summary, groups, categoryMeta,
+      renderLowStock, renderFastMoving, renderProductGroups
+    } = ctx;
     return `
       <div class="inventory-page">
         <div class="inventory-header">

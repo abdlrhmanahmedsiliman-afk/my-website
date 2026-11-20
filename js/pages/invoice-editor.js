@@ -172,19 +172,19 @@ Kashf.pages.invoiceEditor = (function() {
     });
     
     // Save
-    document.getElementById('btnSave').addEventListener('click', saveInvoice);
+    document.getElementById('btnSave').addEventListener('click', () => api.saveInvoice && api.saveInvoice());
     
     // Mark invoice as sent
-    document.getElementById('btnMarkSent')?.addEventListener('click', markAsSent);
+    document.getElementById('btnMarkSent')?.addEventListener('click', () => api.markAsSent && api.markAsSent());
     
     // Record payment
-    document.getElementById('btnRecordPayment').addEventListener('click', openPaymentModal);
+    document.getElementById('btnRecordPayment').addEventListener('click', () => api.openPaymentModal && api.openPaymentModal());
     
     // Print
-    document.getElementById('btnPrint').addEventListener('click', printInvoice);
+    document.getElementById('btnPrint').addEventListener('click', () => api.printInvoice && api.printInvoice());
     
     // Share
-    document.getElementById('btnShare').addEventListener('click', shareInvoice);
+    document.getElementById('btnShare').addEventListener('click', () => api.shareInvoice && api.shareInvoice());
     
     // Add client button
     document.getElementById('btnAddClient').addEventListener('click', () => {
@@ -326,7 +326,7 @@ Kashf.pages.invoiceEditor = (function() {
 
   Object.assign(api, {
     render, createNewQuote, createNewInvoice, bindEvents, renderLineItems, updateLineItemCount, updateTotals, updatePreview,
-    _ctx: { st, store, i18n, logic, ui, templates, plan, icons, api }
+    _ctx: { st, store, i18n, logic, ui, templates, plan, icons, api, render }
   });
   return api;
 })();

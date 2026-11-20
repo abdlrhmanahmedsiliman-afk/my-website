@@ -54,7 +54,11 @@ Kashf.pages.inventory = (function() {
     const groups = logic.groupProductsByCategory(products);
     const totalStockValue = logic.inventorySummary(products).stockCost;
 
-    const html = Kashf.pages.inventoryView.main({ i18n, icons, store, logic, CATEGORIES, st, fmt, insights, products, lowStock, fastMoving });
+    const html = Kashf.pages.inventoryView.main({
+      i18n, icons, store, logic, CATEGORIES, st, fmt, insights, products,
+      isSupermarket, totalStockValue, summary, groups, categoryMeta,
+      renderLowStock, renderFastMoving, renderProductGroups
+    });
     mainContent.innerHTML = html;
     bindEvents();
   }

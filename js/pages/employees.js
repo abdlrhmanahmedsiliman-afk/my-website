@@ -304,9 +304,7 @@ Kashf.pages.employees = (function() {
 
   Object.assign(api, {
     render, refresh,
-    openEmployeeModal, openAdjustmentModal, openPaymentModal, openEmployeeDetails, payAll, deleteEmployee,
-    _ctx: { st, store, i18n, logic, ui, icons, ADJUSTMENT_TYPES, currency, fmt, statusMeta, monthOptions, renderPayrollTable, renderEmptyPayroll, renderEmployeeCard, renderEmptyEmployees, bindEvents, render, refresh,
-openAdjustmentModal, openPaymentModal, openEmployeeDetails, payAll, deleteEmployee }
+    _ctx: { st, store, i18n, logic, ui, icons, ADJUSTMENT_TYPES, currency, fmt, statusMeta, monthOptions, renderPayrollTable, renderEmptyPayroll, renderEmployeeCard, renderEmptyEmployees, bindEvents, render, refresh }
   });
   return api;
 })();
