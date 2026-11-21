@@ -62,7 +62,8 @@ function getSafeBaseUrl(req) {
 
 app.get('/robots.txt', (req, res) => {
   const baseUrl = getSafeBaseUrl(req);
-  res.type('text/plain').send(
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.send(
     `User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /auth/\n${baseUrl ? `Sitemap: ${baseUrl}/sitemap.xml\n` : ''}`
   );
 });
@@ -70,7 +71,8 @@ app.get('/robots.txt', (req, res) => {
 app.get('/sitemap.xml', (req, res) => {
   const baseUrl = getSafeBaseUrl(req);
   const lastmod = new Date().toISOString().slice(0, 10);
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>${baseUrl}/</loc>

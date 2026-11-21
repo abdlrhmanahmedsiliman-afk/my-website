@@ -4050,3 +4050,95 @@
     padding: 0 8px;
   }
 }
+
+/* ==========================================================================
+   Kashf AI Governance: Human Approval Card & Audit Log
+   ========================================================================== */
+.analysis-next-step {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-border);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.analysis-approval-card {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-btn);
+  border: 1.5px solid var(--color-warning, #D9A541);
+  background: var(--color-card);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.analysis-approval-card strong {
+  font-size: var(--fs-sm);
+  color: var(--color-text);
+}
+
+.analysis-approval-card small {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.analysis-approval-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.audit-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.audit-log-row {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-btn);
+  background: var(--color-page);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audit-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-sm);
+}
+
+.audit-log-row small {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.audit-status-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.audit-status-tag.needs_approval {
+  background: rgba(217, 165, 65, 0.16);
+  color: #B47B14;
+}
+
+.audit-status-tag.rejected,
+.audit-status-tag.failed,
+.audit-status-tag.duplicate_blocked {
+  background: rgba(192, 68, 58, 0.14);
+  color: var(--color-danger);
+}

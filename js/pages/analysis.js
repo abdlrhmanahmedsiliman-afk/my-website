@@ -36,18 +36,21 @@ Kashf.pages.analysis = (function() {
       <div class="analysis-page">
         <div class="analysis-header">
           <div>
-            <h1 class="analysis-title">${icons.get('sparkle')} ${i18n.t('smartAdvisor') || 'المساعد الذكي'}</h1>
-            <p class="analysis-subtitle">${ar ? 'وكيل ذكي متصل ببيانات شركتك (Groq وNVIDIA وGemini وCloudflare وOpenRouter) مع الإدخال الصوتي وتنفيذ المهام.' : 'AI agent connected to your business data (Groq, NVIDIA, Gemini, Cloudflare & OpenRouter) with voice input and task execution.'}</p>
+            <h1 class="analysis-title">${icons.get('sparkle')} ${ar ? 'كشف AI — العقل التشغيلي' : 'Kashf AI — Master Orchestrator'}</h1>
+            <p class="analysis-subtitle">${ar ? 'العقل التشغيلي الرئيسي لتطبيق كشف: تحليل، تنفيذ مؤتمت، منع تكرار، سجل تدقيق، واعتماد بشري للقرارات الحساسة.' : 'Master Orchestrator for Kashf: automated execution, duplicate prevention, audit log, and human approval gates.'}</p>
           </div>
           <span class="analysis-status-pill" id="analysisAiStatus">${ar ? 'جارٍ فحص النماذج...' : 'Checking models...'}</span>
         </div>
         <div id="analysisInsights"></div>
         <div class="analysis-chat">
           <div class="analysis-chat-header">
-            <span>${icons.get('sparkle')} ${ar ? 'الوكيل الذكي' : 'Smart Agent'}</span>
-            <select class="analysis-model-select" id="analysisModelSelect" aria-label="${ar ? 'اختيار نموذج الذكاء الاصطناعي' : 'Select AI Model'}">
-              <option value="auto">${ar ? 'تلقائي (الأقوى المتاح)' : 'Auto (Best available)'}</option>
-            </select>
+            <span>${icons.get('sparkle')} ${ar ? 'كشف AI' : 'Kashf AI'}</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnAuditLog">${icons.get('document')} ${ar ? 'سجل التدقيق' : 'Audit Log'}</button>
+              <select class="analysis-model-select" id="analysisModelSelect" aria-label="${ar ? 'اختيار نموذج الذكاء الاصطناعي' : 'Select AI Model'}">
+                <option value="auto">${ar ? 'تلقائي (الأقوى المتاح)' : 'Auto (Best available)'}</option>
+              </select>
+            </div>
           </div>
           <div class="analysis-quick-chips" id="analysisQuickChips">
             <button type="button" class="chip" data-prompt="${ar ? 'مصاريف الشهر ده كام؟' : 'What are this month expenses?'}">${ar ? 'مصاريف الشهر كام؟' : 'Month expenses?'}</button>
@@ -169,11 +172,11 @@ Kashf.pages.analysis = (function() {
   function restoreMessages() {
     if (!renderedLog.length) {
       addChatMessage('assistant', isAr()
-        ? 'أهلاً! أنا وكيل كشف الذكي. اختر النموذج المفضل أو اتركه تلقائياً، واسألني بالصوت أو الكتابة عن حساباتك أو اطلب تنفيذ مهام مثل إضافة عميل أو مصروف أو فاتورة أو عمل جرد.'
-        : 'Hi! Choose any AI model or keep Auto, and ask by voice or text about your business or run actions like adding clients, expenses, invoices, or stocktake.', [], false);
+        ? 'أهلاً بك! أنا "كشف AI" — العقل التشغيلي الرئيسي لتطبيق كشف. اسألني عن أي رقم في شركتك أو اطلب تنفيذ عملية (عميل، مصروف، فاتورة، جرد، تقرير) وسأنفذ الخطوات الآمنة وأطلب اعتمادك للقرارات الحساسة مع توثيق كل خطوة في سجل التدقيق.'
+        : 'Welcome! I am Kashf AI, your Master Orchestrator. Ask about your business or request tasks; safe actions run automatically while sensitive decisions await your approval.', [], false);
       return;
     }
-    renderedLog.forEach(item => appendBubble(item.role, item.text, item.actions));
+    renderedLog.forEach(item => appendBubble(item.role, item.text, item.actions, item.meta));
   }
 
   function bindChat() {
@@ -182,10 +185,12 @@ Kashf.pages.analysis = (function() {
     const micBtn = document.getElementById('analysisMicBtn');
     const chips = document.getElementById('analysisQuickChips');
     const sel = document.getElementById('analysisModelSelect');
+    const auditBtn = document.getElementById('btnAuditLog');
 
     sel?.addEventListener('change', () => {
       localStorage.setItem(PROVIDER_KEY, sel.value || 'auto');
     });
+    auditBtn?.addEventListener('click', showAuditModal);
     send?.addEventListener('click', () => handleChat(input?.value || ''));
     input?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -198,6 +203,29 @@ Kashf.pages.analysis = (function() {
       const btn = e.target.closest('[data-prompt]');
       if (!btn) return;
       handleChat(btn.dataset.prompt);
+    });
+  }
+
+  function showAuditModal() {
+    const ar = isAr();
+    const list = (Kashf.agentGovernance && Kashf.agentGovernance.getAuditLog) ? Kashf.agentGovernance.getAuditLog() : [];
+    const body = list.length
+      ? `<div class="audit-log-list">${list.slice(0, 40).map(item => `
+          <div class="audit-log-row">
+            <div class="audit-log-head">
+              <strong>${escapeHtml(item.summary || item.action)}</strong>
+              <span class="audit-status-tag ${escapeHtml(item.status || '')}">${escapeHtml(item.status || '')}</span>
+            </div>
+            <small>${escapeHtml((item.timestamp || '').replace('T', ' ').slice(0, 19))} · ${escapeHtml(item.actor || '')} (${escapeHtml(item.actorRole || '')})</small>
+          </div>
+        `).join('')}</div>`
+      : `<p class="form-hint">${ar ? 'لا توجد عمليات مسجلة في سجل التدقيق بعد.' : 'No audit log entries yet.'}</p>`;
+    ui.createSheet({
+      title: ar ? 'سجل التدقيق (Audit Log)' : 'Audit Log',
+      body,
+      footer: `<button type="button" class="btn btn-secondary btn-full" id="closeAuditBtn">${i18n.t('close') || 'إغلاق'}</button>`
+    }).then(({ element, close }) => {
+      element.querySelector('#closeAuditBtn')?.addEventListener('click', close);
     });
   }
 
@@ -268,7 +296,7 @@ Kashf.pages.analysis = (function() {
         if (res.configured && !res.error) {
           chatHistory.push({ role: 'user', content: clean });
           chatHistory.push({ role: 'assistant', content: res.reply });
-          addChatMessage('assistant', res.reply, res.actions || []);
+          addChatMessage('assistant', res.reply, res.actions || [], true, { structured: res.structured, pendingApprovals: res.pendingApprovals });
           loadData();
           renderInsights();
           return;
@@ -278,7 +306,7 @@ Kashf.pages.analysis = (function() {
           const note = res.error
             ? (isAr() ? `\n(تم التنفيذ بالمحلل المحلي — ${res.error})` : `\n(Executed locally — ${res.error})`)
             : '';
-          addChatMessage('assistant', local.reply + note, local.actions || []);
+          addChatMessage('assistant', local.reply + note, local.actions || [], true, { pendingApprovals: local.pendingApprovals });
           loadData();
           renderInsights();
           return;
@@ -291,7 +319,7 @@ Kashf.pages.analysis = (function() {
       }
       thinking?.remove();
       const localRes = runLocalFallback(clean);
-      addChatMessage('assistant', localRes.reply, localRes.actions);
+      addChatMessage('assistant', localRes.reply, localRes.actions, true, { pendingApprovals: localRes.pendingApprovals });
       loadData();
       renderInsights();
     } finally {
@@ -315,30 +343,73 @@ Kashf.pages.analysis = (function() {
   function runLocalFallback(text) {
     if (Kashf.agent && Kashf.agent.executeLocalIntent) {
       const local = Kashf.agent.executeLocalIntent(text);
-      if (local.handled) return { reply: local.reply, actions: local.actions || [] };
+      if (local.handled) return { reply: local.reply, actions: local.actions || [], pendingApprovals: local.pendingApprovals || [] };
     }
     return {
       reply: isAr()
         ? 'لم أتعرف على الأمر محلياً. جرّب: "أضف عميل باسم أحمد"، "أضف مصروف 500 إيجار"، "أنشئ فاتورة لـ أحمد بمبلغ 1000 تصميم"، "اعمل لي جرد"، أو "تقرير الشركة".'
         : 'Command not matched locally. Try: "add client Ahmed", "add expense 500 rent", "create invoice for Ahmed 1000 design", "run stocktake", or "company report".',
-      actions: []
+      actions: [],
+      pendingApprovals: []
     };
   }
 
-  function addChatMessage(role, text, actions = [], save = true) {
-    if (save) renderedLog.push({ role, text, actions });
-    return appendBubble(role, text, actions);
+  function addChatMessage(role, text, actions = [], save = true, meta = null) {
+    if (save) renderedLog.push({ role, text, actions, meta });
+    return appendBubble(role, text, actions, meta);
   }
 
-  function appendBubble(role, text, actions = []) {
+  function appendBubble(role, text, actions = [], meta = null) {
     const box = document.getElementById('analysisChat');
     if (!box) return null;
+    const ar = isAr();
     const div = document.createElement('div');
     div.className = 'analysis-msg ' + role;
     const actionsHtml = (actions && actions.length)
       ? `<div class="analysis-actions-log">${actions.map(a => `<span class="analysis-action-badge">${icons.get('checkCircle')} ${escapeHtml(a)}</span>`).join('')}</div>`
       : '';
-    div.innerHTML = `<div class="analysis-msg-bubble">${escapeHtml(text)}${actionsHtml}</div>`;
+    const st = meta && meta.structured ? meta.structured : null;
+    const nextStep = st && st.next_step
+      ? `<div class="analysis-next-step">${ar ? 'الخطوة التالية:' : 'Next step:'} ${escapeHtml(st.next_step)}</div>`
+      : '';
+    const extraNotes = [];
+    if (st && Array.isArray(st.missing_fields) && st.missing_fields.length) {
+      extraNotes.push(`${ar ? 'بيانات مطلوبة:' : 'Missing fields:'} ${st.missing_fields.map(escapeHtml).join('، ')}`);
+    }
+    if (st && Array.isArray(st.validation_issues) && st.validation_issues.length) {
+      extraNotes.push(`${ar ? 'ملاحظات التحقق:' : 'Validation:'} ${st.validation_issues.map(escapeHtml).join('، ')}`);
+    }
+    const extraHtml = extraNotes.length ? `<div class="analysis-next-step">${extraNotes.join('<br>')}</div>` : '';
+    div.innerHTML = `<div class="analysis-msg-bubble">${escapeHtml(text)}${extraHtml}${nextStep}${actionsHtml}</div>`;
+
+    const pendingList = (meta && Array.isArray(meta.pendingApprovals)) ? meta.pendingApprovals : [];
+    pendingList.forEach(pending => {
+      const card = document.createElement('div');
+      card.className = 'analysis-approval-card';
+      card.innerHTML = `
+        <strong>${ar ? 'اعتماد بشري مطلوب' : 'Approval Required'}: ${escapeHtml(pending.title || '')}</strong>
+        <small>${escapeHtml(pending.reason || '')}</small>
+        <div class="analysis-approval-actions">
+          <button type="button" class="btn btn-primary btn-sm" data-approve="1">${icons.get('check')} ${ar ? 'اعتماد وتنفيذ' : 'Approve & Run'}</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-reject="1">${ar ? 'رفض' : 'Reject'}</button>
+        </div>
+      `;
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('[data-approve]')) {
+          const out = Kashf.agent.approvePendingAction(pending);
+          card.innerHTML = out.success
+            ? `<span class="positive">${icons.get('checkCircle')} ${escapeHtml(out.summary || (ar ? 'تم الاعتماد والتنفيذ' : 'Approved & executed'))}</span>`
+            : `<span class="negative">${escapeHtml(out.error || 'Error')}</span>`;
+          loadData();
+          renderInsights();
+        } else if (e.target.closest('[data-reject]')) {
+          Kashf.agent.rejectPendingAction(pending);
+          card.innerHTML = `<small>${ar ? 'تم رفض الإجراء وتسجيل ذلك في سجل التدقيق.' : 'Rejected and recorded in audit log.'}</small>`;
+        }
+      });
+      div.querySelector('.analysis-msg-bubble')?.appendChild(card);
+    });
+
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
     return div;

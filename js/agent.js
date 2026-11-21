@@ -51,7 +51,9 @@ Kashf.agent = (function() {
     const aging = logic.agingBuckets(invoices);
     const budget = JSON.parse(localStorage.getItem('kashf_budget_' + ym) || 'null');
 
+    const gov = Kashf.agentGovernance;
     return {
+      authContext: gov ? gov.getAuthContext() : { userRole: 'owner', authenticated: false },
       business: {
         name: settings.businessName || 'كشف', type: settings.businessType || 'general',
         currency: settings.defaultCurrency || 'EGP', taxEnabled: settings.taxEnabled !== false,
@@ -86,27 +88,8 @@ Kashf.agent = (function() {
     };
   }
 
-  function detectCategory(t) {
-    if (/ايجار|rent/.test(t)) return 'rent';
-    if (/نقل|مواصلات|بنزين|شحن|transport|fuel/.test(t)) return 'transport';
-    if (/ادوات|معدات|اجهزه|tools|equipment/.test(t)) return 'tools';
-    if (/انترنت|نت|اتصالات|باقه|موبايل|internet/.test(t)) return 'internet';
-    if (/تسويق|اعلان|دعايه|marketing|ads/.test(t)) return 'marketing';
-    if (/مرتب|رواتب|اجور|salar|payroll/.test(t)) return 'salaries';
-    if (/ضريب|ضرائب|tax/.test(t)) return 'taxes';
-    return 'other';
-  }
-
-  function detectMethod(t) {
-    if (/فودافون|vodafone/.test(t)) return 'vodafone';
-    if (/انستاباي|instapay/.test(t)) return 'instapay';
-    if (/بنك|تحويل|bank/.test(t)) return 'bank';
-    if (/كارت|فيزا|بطاقه|card/.test(t)) return 'card';
-    return 'cash';
-  }
-
   function cleanEntityText(raw) {
-    return String(raw || '').replace(/^(?:باسم|اسمه|اسم|لـ|ل|named|name|called|for)\s*/i, '').replace(/^[:\-\s"']+|["'\s.،,!؟?]+$/g, '').trim();
+    return Kashf.agentGovernance ? Kashf.agentGovernance.cleanEntityText(raw) : String(raw || '').trim();
   }
 
   function findClientByQuery(q) {
@@ -121,132 +104,50 @@ Kashf.agent = (function() {
     return store.getInvoices().find(i => String(i.number || '').toUpperCase() === target || String(i.number || '').toUpperCase().includes(target)) || null;
   }
 
-  // Parse natural Arabic/English user input into structured intents mapped to store-crud.js
   function parseUserIntent(rawText) {
-    const text = normDigits(rawText).trim();
-    const t = normAr(text);
-    if (!t) return null;
-
-    // 1. Add payment to invoice (store.addPayment)
-    const invNumMatch = text.match(/\b(INV[-–]\d{4}[-–]\d+|INV\d+)\b/i);
-    if (/(?:دفع|دفعه|سداد|تحصيل|payment|pay)/.test(t) && (invNumMatch || /فاتوره|invoice/.test(t))) {
-      const amtMatch = text.match(/(\d+(?:\.\d+)?)/);
-      if (amtMatch) {
-        return {
-          intent: 'add_payment', storeMethod: 'addPayment', confidence: 0.9,
-          args: { invoiceNumber: invNumMatch ? invNumMatch[1] : '', amount: Number(amtMatch[1]), method: detectMethod(t) }
-        };
-      }
-    }
-
-    // 2. Convert quote to invoice (store.convertQuoteToInvoice)
-    const quoNumMatch = text.match(/\b(QUO[-–]\d{4}[-–]\d+|QUO\d+)\b/i);
-    if (/(?:حول|تحويل|convert)/.test(t) && /(?:عرض|quote)/.test(t)) {
-      return { intent: 'convert_quote', storeMethod: 'convertQuoteToInvoice', confidence: 0.9, args: { quoteNumber: quoNumMatch ? quoNumMatch[1] : '' } };
-    }
-
-    // 3. Create quote (store.addQuote) or Create invoice (store.addInvoice)
-    const isQuote = /(?:عرض\s*سعر|تسعيره|quote)/.test(t);
-    const isInvoice = !isQuote && /(?:فاتوره|invoice)/.test(t);
-    if ((isQuote || isInvoice) && /(?:اضف|اضافه|انشئ|انشاء|اعمل|عمل|سجل|اصدار|جديد|add|create|new|make)/.test(t)) {
-      const numMatch = text.match(/(\d+(?:\.\d+)?)/);
-      const forMatch = text.match(/(?:للعميل|لعميل|لـ|ل|باسم|for)\s+([^\d]+?)(?=\s+(?:بمبلغ|بقيمه|بـ|سعر|\d)|$)/i);
-      const clientName = forMatch ? cleanEntityText(forMatch[1]) : '';
-      const price = numMatch ? Number(numMatch[1]) : 0;
-      const descMatch = numMatch ? text.slice(text.indexOf(numMatch[1]) + numMatch[1].length).replace(/^(?:جنيه|ج|ريال|دولار|egp|sar|usd)?\s*/i, '').trim() : '';
-      const intent = isQuote ? 'create_quote' : 'create_invoice';
-      return {
-        intent, storeMethod: isQuote ? 'addQuote' : 'addInvoice', confidence: 0.88,
-        args: { clientName, items: [{ description: descMatch || (isAr() ? 'خدمة / بند' : 'Service / Item'), qty: 1, price }], markSent: false }
-      };
-    }
-
-    // 4. Delete client (store.deleteClient)
-    const delClientMatch = text.match(/(?:احذف|حذف|امسح|مسح|ازاله|delete|remove)\s+(?:العميل|عميل)\s+(.+)$/i);
-    if (delClientMatch) {
-      return { intent: 'delete_client', storeMethod: 'deleteClient', confidence: 0.92, args: { name: cleanEntityText(delClientMatch[1]) } };
-    }
-
-    // 5. Update client (store.updateClient)
-    const updClientMatch = text.match(/(?:عدل|تعديل|حدث|تحديث|غير|تغيير|update|edit)\s+(?:بيانات\s+)?(?:العميل|عميل)\s+(.+)$/i);
-    if (updClientMatch) {
-      const rest = updClientMatch[1];
-      const phoneM = rest.match(/(\+?\d{8,15})/);
-      const emailM = rest.match(/[\w.-]+@[\w.-]+\.\w+/);
-      const namePart = cleanEntityText(rest.replace(phoneM ? phoneM[0] : '', '').replace(emailM ? emailM[0] : '', '').replace(/(?:رقم|هاتف|تليفون|موبايل|ايميل|بريد|phone|email)/gi, ''));
-      return {
-        intent: 'update_client', storeMethod: 'updateClient', confidence: 0.9,
-        args: { name: namePart, phone: phoneM ? phoneM[1] : undefined, email: emailM ? emailM[0] : undefined }
-      };
-    }
-
-    // 6. Add client (store.addClient)
-    const addClientMatch = text.match(/(?:اضف|أضف|اضافه|إضافة|سجل|تسجيل|انشئ|انشاء|اعمل|ضيف|add|create|new)\s+(?:ال)?(?:عميل|زبون|client|customer)(?:\s+(?:جديد|new))?(?:\s+(?:باسم|اسمه|اسم|named|called))?\s*[:\-]?\s*(.*)$/i);
-    if (addClientMatch) {
-      let rest = addClientMatch[1] || '';
-      const phoneM = rest.match(/(\+?\d{8,15})/);
-      const emailM = rest.match(/[\w.-]+@[\w.-]+\.\w+/);
-      if (phoneM) rest = rest.replace(phoneM[0], '');
-      if (emailM) rest = rest.replace(emailM[0], '');
-      rest = rest.replace(/(?:رقم|هاتف|تليفون|موبايل|واتساب|ايميل|بريد|phone|mobile|whatsapp|email)\s*[:\-]?/gi, '');
-      return {
-        intent: 'add_client', storeMethod: 'addClient', confidence: 0.95,
-        args: { name: cleanEntityText(rest), phone: phoneM ? phoneM[1] : '', email: emailM ? emailM[0] : '' }
-      };
-    }
-
-    // 7. Add expense (store.addExpense)
-    if (/(?:مصروف|مصاريف|صرفنا|صرفت|expense)/.test(t) && /(?:اضف|أضف|اضافه|إضافة|سجل|تسجيل|صرف|add|log|record|\d)/.test(t) && !/(?:كام|كم|ما|اجمالي|تقرير|how|what|total)/.test(t)) {
-      const amtM = text.match(/(\d+(?:\.\d+)?)/);
-      if (amtM) {
-        const cleanedVendor = text.replace(amtM[0], '').replace(/(?:اضف|أضف|اضافه|إضافة|سجل|تسجيل|مصروفات|مصروف|صرفنا|صرفت|جنيه|ج|بـ|في|على|من|add|record|expense|egp|sar)/gi, '').trim();
-        return {
-          intent: 'add_expense', storeMethod: 'addExpense', confidence: 0.9,
-          args: { amount: Number(amtM[1]), category: detectCategory(t), vendor: cleanedVendor, paymentMethod: detectMethod(t) }
-        };
-      }
-    }
-
-    // 8. Add product (store.addProduct)
-    const addProdMatch = text.match(/(?:اضف|أضف|اضافه|إضافة|سجل|add|create)\s+(?:منتج|صنف|product)\s+(?:جديد\s+)?(?:باسم\s+)?(.+)$/i);
-    if (addProdMatch) {
-      const rest = addProdMatch[1];
-      const priceM = rest.match(/(?:بسعر|سعر|price)\s*(\d+(?:\.\d+)?)/i);
-      const costM = rest.match(/(?:تكلفه|شراء|cost)\s*(\d+(?:\.\d+)?)/i);
-      const stockM = rest.match(/(?:كميه|مخزون|عدد|stock|qty)\s*(\d+(?:\.\d+)?)/i);
-      const cleanName = cleanEntityText(rest.replace(/(?:بسعر|سعر|تكلفه|شراء|كميه|مخزون|عدد|price|cost|stock|qty)\s*\d+(?:\.\d+)?/gi, ''));
-      return {
-        intent: 'add_product', storeMethod: 'addProduct', confidence: 0.9,
-        args: { name: cleanName, salePrice: priceM ? Number(priceM[1]) : 0, purchaseCost: costM ? Number(costM[1]) : 0, stock: stockM ? Number(stockM[1]) : 0 }
-      };
-    }
-
-    // 9. Stocktake / Reports / Navigation / Summary queries
-    if (/(?:جرد|stocktake)/.test(t)) return { intent: 'run_stocktake', storeMethod: null, confidence: 0.92, args: {} };
-    if (/(?:تقرير|report)/.test(t)) return { intent: 'open_report', storeMethod: null, confidence: 0.9, args: { period: 'thisMonth' } };
-    const navMap = [
-      [/عملاء|العملاء|clients/, 'clients'], [/فواتير|الفواتير|invoices/, 'invoices'], [/مصاريف|المصاريف|expenses/, 'expenses'],
-      [/مخزون|المخزون|inventory/, 'inventory'], [/منتجات|المنتجات|products/, 'products'], [/موظفين|الموظفين|رواتب|employees/, 'employees'],
-      [/نقطه البيع|كاشير|pos/, 'pos'], [/عروض الاسعار|quotes/, 'quotes'], [/اعدادات|settings/, 'settings'], [/ميزانيه|budget/, 'budget']
-    ];
-    if (/(?:افتح|اذهب|انتقل|وريني|اعرض|open|go to|show)/.test(t)) {
-      const found = navMap.find(([rx]) => rx.test(t));
-      if (found) return { intent: 'navigate_page', storeMethod: null, confidence: 0.88, args: { page: found[1] } };
-    }
-    if (/(?:مصاريف|مصروفات|ربح|صافي|ايراد|مبيعات|عملاء|فواتير|expense|profit|revenue|client)/.test(t)) {
-      return { intent: 'query_summary', storeMethod: null, confidence: 0.85, args: { query: t } };
-    }
-    return null;
+    return Kashf.agentGovernance ? Kashf.agentGovernance.parseUserIntent(rawText, isAr) : null;
   }
 
   function safeNavigate(page) {
     if (Kashf.router && typeof Kashf.router.navigate === 'function') Kashf.router.navigate(page);
   }
 
-  function executeTool(name, rawArgs) {
+  function executeTool(name, rawArgs, options) {
     const args = rawArgs && typeof rawArgs === 'object' ? rawArgs : {};
     const ar = isAr();
+    const gov = Kashf.agentGovernance;
+    const approved = Boolean(options && options.approved);
 
+    if (gov && gov.checkGovernance) {
+      const check = gov.checkGovernance(name, args, store, approved, ar);
+      if (!check.allowed) {
+        gov.recordAudit({
+          processType: name, action: name, status: check.status, summary: check.title || check.reason, details: args
+        });
+        return {
+          success: false,
+          status: check.status,
+          human_approval_required: Boolean(check.humanApprovalRequired),
+          approval_required_from: check.approver || '',
+          approval_reason: check.reason,
+          pendingAction: check.humanApprovalRequired ? { fnName: name, args, title: check.title, reason: check.reason, approver: check.approver } : null,
+          error: check.reason
+        };
+      }
+    }
+
+    const res = runToolSwitch(name, args, ar);
+    if (gov && gov.recordAudit && !['get_company_summary', 'navigate_page'].includes(name)) {
+      gov.recordAudit({
+        processType: name, action: name,
+        status: res.success ? (approved ? 'approved_and_executed' : 'success') : 'failed',
+        summary: res.summary || res.error || name, details: args
+      });
+    }
+    return res;
+  }
+
+  function runToolSwitch(name, args, ar) {
     switch (name) {
       case 'add_client': {
         const clientName = String(args.name || '').trim();
@@ -390,9 +291,31 @@ Kashf.agent = (function() {
     }
 
     const res = executeTool(parsed.intent, parsed.args);
-    if (!res.success) return { handled: true, parsed, reply: res.error, actions: [] };
+    if (!res.success) {
+      return {
+        handled: true, parsed, result: res,
+        reply: res.error,
+        pendingApprovals: res.pendingAction ? [res.pendingAction] : [],
+        actions: []
+      };
+    }
     const reply = ar ? `تم التنفيذ بنجاح: ${res.summary}.` : `Done: ${res.summary}.`;
-    return { handled: true, parsed, result: res, reply, actions: res.summary ? [res.summary] : [] };
+    return { handled: true, parsed, result: res, reply, pendingApprovals: [], actions: res.summary ? [res.summary] : [] };
+  }
+
+  function approvePendingAction(pending) {
+    if (!pending || !pending.fnName) return { success: false, error: 'Invalid pending action' };
+    return executeTool(pending.fnName, pending.args || {}, { approved: true });
+  }
+
+  function rejectPendingAction(pending) {
+    if (Kashf.agentGovernance && pending) {
+      Kashf.agentGovernance.recordAudit({
+        processType: pending.fnName, action: pending.fnName,
+        status: 'rejected', summary: pending.title || pending.fnName, details: pending.args || null
+      });
+    }
+    return { success: true, rejected: true };
   }
 
   async function run(userText, history, options) {
@@ -401,6 +324,7 @@ Kashf.agent = (function() {
     const convo = Array.isArray(history) ? history.slice(-12) : [];
     convo.push({ role: 'user', content: userText });
     const actions = [];
+    const pendingApprovals = [];
     let usedProvider = provider;
     let usedModel = '';
 
@@ -414,16 +338,22 @@ Kashf.agent = (function() {
       if (data.provider) usedProvider = data.provider;
       if (data.model) usedModel = data.model;
       if (res.status === 503 || data.configured === false) {
-        return { configured: false, status: res.status, provider: usedProvider, envVar: data.envVar || '', reply: '', actions, error: data.error || '' };
+        return { configured: false, status: res.status, provider: usedProvider, envVar: data.envVar || '', reply: '', actions, pendingApprovals, error: data.error || '' };
       }
       if (!res.ok) {
-        return { configured: true, status: res.status, provider: usedProvider, reply: '', actions, error: data.error || `HTTP ${res.status}` };
+        return { configured: true, status: res.status, provider: usedProvider, reply: '', actions, pendingApprovals, error: data.error || `HTTP ${res.status}` };
       }
 
       const assistantMsg = data.message || {};
       const toolCalls = Array.isArray(assistantMsg.tool_calls) ? assistantMsg.tool_calls : [];
       if (!toolCalls.length) {
-        return { configured: true, provider: usedProvider, model: usedModel, reply: assistantMsg.content || '', actions };
+        const parsedOut = Kashf.agentGovernance
+          ? Kashf.agentGovernance.parseStructuredResponse(assistantMsg.content || '')
+          : { text: assistantMsg.content || '', structured: null };
+        return {
+          configured: true, provider: usedProvider, model: usedModel,
+          reply: parsedOut.text, structured: parsedOut.structured, actions, pendingApprovals
+        };
       }
 
       const assistTurn = { role: 'assistant', content: assistantMsg.content || '', tool_calls: toolCalls };
@@ -436,11 +366,12 @@ Kashf.agent = (function() {
         const fnName = tc?.function?.name || '';
         const toolResult = executeTool(fnName, parsedArgs);
         if (toolResult.success && toolResult.summary) actions.push(toolResult.summary);
+        if (toolResult.pendingAction) pendingApprovals.push(toolResult.pendingAction);
         convo.push({ role: 'tool', tool_call_id: tc.id, name: fnName, content: JSON.stringify(toolResult) });
       }
     }
-    return { configured: true, provider: usedProvider, model: usedModel, reply: isAr() ? 'تم تنفيذ المهام المطلوبة بنجاح.' : 'Done! Executed the requested tasks.', actions };
+    return { configured: true, provider: usedProvider, model: usedModel, reply: isAr() ? 'تم تنفيذ المهام المطلوبة بنجاح.' : 'Done! Executed the requested tasks.', actions, pendingApprovals };
   }
 
-  return { checkStatus, buildSnapshot, parseUserIntent, executeTool, executeLocalIntent, run };
+  return { checkStatus, buildSnapshot, parseUserIntent, executeTool, executeLocalIntent, approvePendingAction, rejectPendingAction, run };
 })();

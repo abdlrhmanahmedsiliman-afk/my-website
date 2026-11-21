@@ -59,6 +59,7 @@ const ASSETS = [
   '/js/pages/products.js',
   '/js/pages/pos.js',
   '/js/pages/budget.js',
+  '/js/agent-governance.js',
   '/js/agent.js',
   '/js/pages/analysis.js',
   '/js/pages/stocktake.js',
